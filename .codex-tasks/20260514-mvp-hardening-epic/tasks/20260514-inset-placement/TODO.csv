@@ -1,6 +1,0 @@
-id,task,status,acceptance_criteria,validation_command,completed_at,retry_count,notes
-1,Inspect current canvas placement flow,DONE,Current drag resize dock and renderer files are understood,git -c safe.directory="D:/code/Figure Composer" status --short,2026-05-14T17:53:05+08:00,0,"Object drag resize and ROI frame flow inspected"
-2,Add testable placement helpers,DONE,Placement helper tests cover canvas and object-edge snapping,npm.cmd run test,2026-05-14T17:54:43+08:00,0,"Added placementSnapping helper and Vitest coverage"
-3,Wire snapping into canvas interactions,DONE,Drag and resize commands apply placement helpers without breaking existing reducer behavior,npm.cmd run test,2026-05-14T18:00:21+08:00,0,"Object drag and transformer bounds now use placement helpers"
-4,Render active snap guides,DONE,Canvas shows guide lines during drag or resize and clears them after interaction,npm.cmd run typecheck,2026-05-14T18:00:21+08:00,0,"FigureStage renders transient placement guides"
-5,Validate and close child task,DONE,All checks pass and taskmaster artifacts are updated,npm.cmd run build,2026-05-14T18:01:11+08:00,0,"test typecheck build diff-check and localhost HTTP check passed"

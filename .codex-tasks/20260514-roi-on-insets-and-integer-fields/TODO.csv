@@ -1,7 +1,0 @@
-id,task,status,acceptance_criteria,validation_command,completed_at,retry_count,notes
-1,Remove derived crop UI and controller path,DONE,"Inspector no longer exposes ROI-to-derived-source crop action","npm.cmd run typecheck",2026-05-14T20:02:00+08:00,0,
-2,Support ROI creation and rendering on insets,DONE,"ROI can be created from an inset and project references remain valid","npm.cmd run test -- --run src/editor/state/projectStore.test.ts src/editor/project/projectReferences.test.ts src/editor/state/roiCommands.test.ts",2026-05-14T20:08:00+08:00,0,
-3,Restrict selection panel fields to integers,DONE,"Right panel displays and dispatches integer bounds only","npm.cmd run typecheck",2026-05-14T20:10:00+08:00,0,
-4,Run final validation,DONE,"Tests/typecheck/build and code metric checks pass","npm.cmd run test; npm.cmd run typecheck; npm.cmd run build",2026-05-14T20:14:00+08:00,0,
-5,Block deleting ROI with child ROIs,DONE,"Deleting a ROI whose linked inset is used by child ROIs throws a clear error","npm.cmd run test -- --run src/editor/state/roiCommands.test.ts",2026-05-14T20:05:00+08:00,0,
-6,Disable ROI delete when dependent nodes exist,DONE,"Inspector delete button is disabled with a visible reason when child ROI or derived lineage blocks deletion","npm.cmd run test -- --run src/editor/state/roiCommands.test.ts; npm.cmd run typecheck",2026-05-14T20:08:00+08:00,0,

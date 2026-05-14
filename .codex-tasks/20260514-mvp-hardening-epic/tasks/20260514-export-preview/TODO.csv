@@ -1,6 +1,0 @@
-id,task,status,acceptance_criteria,validation_command,completed_at,retry_count,notes
-1,Inspect current export flow,DONE,Current export preset dialog renderer and Figure Layout boundaries are understood,git -c safe.directory="D:/code/Figure Composer" status --short,2026-05-14T18:25:08+08:00,0,"Export preset dialog renderer Figure Layout and export code inspected"
-2,Add testable export preview sizing helpers,DONE,Preview sizing and final pixel dimension tests cover output size scale and DPI settings,npm.cmd run test,2026-05-14T18:26:18+08:00,0,"Added exportPreview helper and Vitest coverage"
-3,Render export preview and pixel size,DONE,Export dialog shows preview canvas and final pixel dimensions,npm.cmd run test,2026-05-14T18:29:35+08:00,0,"Added ExportPreview component and dialog summary"
-4,Preserve Figure Layout separation,DONE,Export setting edits do not mutate figure canvas settings,npm.cmd run typecheck,2026-05-14T18:31:16+08:00,0,"Output size controls export scaling and reducer separation tests completed"
-5,Validate and close child task,DONE,All checks pass and taskmaster artifacts are updated,npm.cmd run build,2026-05-14T18:32:34+08:00,0,"test typecheck build diff-check file-size function-span and HTTP checks passed"

@@ -1,6 +1,0 @@
-id,task,status,acceptance_criteria,validation_command,completed_at,retry_count,notes
-1,Inspect source image model and UI flow,DONE,Current source image model list reducer and JSON reference behavior are understood,git -c safe.directory="D:/code/Figure Composer" status --short,2026-05-14T18:13:18+08:00,0,"Source image model reducer JSON list UI and reference flow inspected"
-2,Add testable source image management rules,DONE,Tests cover rename delete unreferenced and referenced delete blocking,npm.cmd run test,2026-05-14T18:15:02+08:00,0,"Added sourceImageCommands reducer actions undoable history and reducer coverage"
-3,Wire rename action into state and UI,DONE,Source image list can rename images and preserve references,npm.cmd run test,2026-05-14T18:17:20+08:00,0,"Rename handler wired through controller Inspector and SourceImageList"
-4,Wire delete action into state and UI,DONE,Source image list deletes only unreferenced images and reports referenced blocking errors,npm.cmd run typecheck,2026-05-14T18:18:36+08:00,1,"Delete handler and icon action wired after correcting HistoryAction dispatch typing"
-5,Validate and close child task,DONE,All checks pass and taskmaster artifacts are updated,npm.cmd run build,2026-05-14T18:21:11+08:00,0,"test typecheck build diff-check file-size function-span and HTTP checks passed"
