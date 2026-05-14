@@ -3,6 +3,7 @@ import type { ExportPreviewMetrics } from "../editor/export/exportPreview";
 import type {
   Figure,
   FigureObject,
+  GenericAnnotationObject,
   InsetObject,
   SourceImageObject,
 } from "../editor/model/figure";
@@ -12,6 +13,7 @@ import {
   getFigureObject,
   getRoi,
   getSourceImage,
+  isFigureImageObject,
   mapSourceRectToStageRect,
 } from "../editor/model/selectors";
 
@@ -69,6 +71,9 @@ function ObjectPreview({
       <SourceImageObjectPreview figure={figure} metrics={metrics} object={object} />
     );
   }
+  if (object.kind === "genericAnnotation") {
+    return <AnnotationObjectPreview metrics={metrics} object={object} />;
+  }
   return <InsetObjectPreview figure={figure} metrics={metrics} object={object} />;
 }
 
@@ -115,6 +120,23 @@ function InsetObjectPreview({
   );
 }
 
+function AnnotationObjectPreview({
+  metrics,
+  object,
+}: {
+  readonly metrics: ExportPreviewMetrics;
+  readonly object: GenericAnnotationObject;
+}): ReactElement {
+  return (
+    <div
+      className="export-preview-annotation"
+      style={createAnnotationStyle(object, metrics)}
+    >
+      {object.text}
+    </div>
+  );
+}
+
 function RoiFramePreview({
   figure,
   metrics,
@@ -128,6 +150,9 @@ function RoiFramePreview({
     return null;
   }
   const sourceObject = getFigureObject(figure, roi.sourceObjectId);
+  if (!isFigureImageObject(sourceObject)) {
+    throw new Error("ROI frame preview source must be a Source Image or Inset object.");
+  }
   const stageRect = mapSourceRectToStageRect(roi.rect, figure, sourceObject);
   return <div className="export-preview-roi" style={createRoiStyle(stageRect, roi, metrics)} />;
 }
@@ -152,6 +177,17 @@ function createObjectStyle(
     top: object.y * metrics.previewScaleY,
     width: object.width * metrics.previewScaleX,
     height: object.height * metrics.previewScaleY,
+  };
+}
+
+function createAnnotationStyle(
+  object: GenericAnnotationObject,
+  metrics: ExportPreviewMetrics,
+): CSSProperties {
+  return {
+    ...createObjectStyle(object, metrics),
+    color: object.fill,
+    fontSize: object.fontSize * Math.min(metrics.previewScaleX, metrics.previewScaleY),
   };
 }
 

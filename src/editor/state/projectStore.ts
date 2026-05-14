@@ -21,10 +21,17 @@ import {
   updateRoiFromStageRect,
 } from "./figureCommands";
 import {
+  addDerivedSourceImageToFigure,
   addSourceImageToFigure,
   createInitialFigure,
+  type DerivedSourceImageInput,
 } from "./figureFactory";
 import { updateExportPreset } from "./exportPresetCommands";
+import {
+  addGenericAnnotation,
+  updateGenericAnnotationText,
+} from "./annotationCommands";
+import { deleteSelectedComponent } from "./componentDeleteCommands";
 import { deleteRoi } from "./roiCommands";
 import { deleteSourceImage, renameSourceImage } from "./sourceImageCommands";
 
@@ -32,15 +39,26 @@ export type ProjectAction =
   | { readonly type: "projectOpened"; readonly figure: Figure }
   | { readonly type: "sourceImageImported"; readonly imported: ImportedSourceImage }
   | {
+      readonly type: "derivedSourceImageCreated";
+      readonly derived: DerivedSourceImageInput;
+    }
+  | {
       readonly type: "sourceImageRenamed";
       readonly sourceImageId: string;
       readonly name: string;
     }
   | { readonly type: "sourceImageDeleted"; readonly sourceImageId: string }
+  | { readonly type: "selectedComponentDeleted" }
   | {
       readonly type: "linkedInsetCreated";
       readonly sourceObjectId: string;
       readonly stageRect: Rect;
+    }
+  | { readonly type: "genericAnnotationAdded" }
+  | {
+      readonly type: "genericAnnotationTextChanged";
+      readonly objectId: string;
+      readonly text: string;
     }
   | {
       readonly type: "figureObjectMoved";
@@ -76,6 +94,8 @@ export function projectReducer(figure: Figure, action: ProjectAction): Figure {
       return action.figure;
     case "sourceImageImported":
       return addSourceImageToFigure(figure, action.imported);
+    case "derivedSourceImageCreated":
+      return addDerivedSourceImageToFigure(figure, action.derived);
     case "sourceImageRenamed":
       return renameSourceImage(figure, {
         sourceImageId: action.sourceImageId,
@@ -83,12 +103,18 @@ export function projectReducer(figure: Figure, action: ProjectAction): Figure {
       });
     case "sourceImageDeleted":
       return deleteSourceImage(figure, action.sourceImageId);
+    case "selectedComponentDeleted":
+      return deleteSelectedComponent(figure);
     case "linkedInsetCreated":
       return createLinkedInsetFromStageRect(
         figure,
         action.sourceObjectId,
         action.stageRect,
       );
+    case "genericAnnotationAdded":
+      return addGenericAnnotation(figure);
+    case "genericAnnotationTextChanged":
+      return updateGenericAnnotationText(figure, action.objectId, action.text);
     case "figureObjectMoved":
       return moveFigureObject(figure, action.objectId, {
         x: action.x,

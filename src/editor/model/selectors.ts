@@ -1,4 +1,4 @@
-import type { Figure, FigureObject } from "./figure";
+import type { Figure, FigureImageObject, FigureObject } from "./figure";
 import type { Point, Rect } from "./geometry";
 import type { RegionOfInterest } from "./roi";
 import type { SourceImage } from "./sourceImage";
@@ -41,6 +41,20 @@ export function findTopFigureObjectAtPoint(
   return objects.find((item) => pointInsideObject(point, item)) ?? null;
 }
 
+export function findTopSourceObjectAtPoint(
+  figure: Figure,
+  point: Point,
+): FigureImageObject | null {
+  const object = findTopFigureObjectAtPoint(figure, point);
+  return object && isFigureImageObject(object) ? object : null;
+}
+
+export function isFigureImageObject(
+  object: FigureObject,
+): object is FigureImageObject {
+  return object.kind === "sourceImage" || object.kind === "inset";
+}
+
 export function pointInsideObject(point: Point, object: FigureObject): boolean {
   const insideX = point.x >= object.x && point.x <= object.x + object.width;
   const insideY = point.y >= object.y && point.y <= object.y + object.height;
@@ -50,7 +64,7 @@ export function pointInsideObject(point: Point, object: FigureObject): boolean {
 export function mapStageRectToSourceRect(
   stageRect: Rect,
   figure: Figure,
-  sourceObject: FigureObject,
+  sourceObject: FigureImageObject,
 ): Rect {
   const visibleSourceRect = getVisibleSourceRect(figure, sourceObject);
   const scaleX = visibleSourceRect.width / sourceObject.width;
@@ -66,7 +80,7 @@ export function mapStageRectToSourceRect(
 export function mapSourceRectToStageRect(
   sourceRect: Rect,
   figure: Figure,
-  sourceObject: FigureObject,
+  sourceObject: FigureImageObject,
 ): Rect {
   const visibleSourceRect = getVisibleSourceRect(figure, sourceObject);
   const scaleX = sourceObject.width / visibleSourceRect.width;
@@ -79,7 +93,7 @@ export function mapSourceRectToStageRect(
   };
 }
 
-function getVisibleSourceRect(figure: Figure, object: FigureObject): Rect {
+function getVisibleSourceRect(figure: Figure, object: FigureImageObject): Rect {
   if (object.kind === "inset") {
     return getRoi(figure, object.roiId).rect;
   }

@@ -100,7 +100,9 @@ time. Source Images and Insets are constrained to the Figure canvas; ROI Frames
 are constrained to their Source Image. Selected Insets can be docked to the top,
 right, bottom, or left side of their linked Source Image. The Inspector lists
 all Source Images so users can reselect the original image object directly when
-working with multiple canvas objects.
+working with multiple canvas objects. Generic Annotation text objects can be
+added from the toolbar, moved and resized on the Figure canvas, saved in the
+Project, and included in Export Preview output.
 
 ## MVP Image Operations
 
@@ -111,6 +113,13 @@ MVP image operations are limited to:
 - Rotate 90, 180, or 270 degrees.
 - Format conversion through export.
 - Canvas size and DPI through export presets.
+
+Current implementation creates **Derived Source Images** for figure-safe
+operations instead of mutating referenced Source Images. Supported user actions
+currently include cropping a ROI into a new Source Image, creating a 50% resized
+Derived Source Image, and creating a 90 degree rotated Derived Source Image.
+Derived Source Image lineage records explicit `crop`, `resize`, or `rotate`
+operations, with legacy crop fields preserved for old project files.
 
 Deferred image operations:
 
@@ -130,8 +139,10 @@ Supported in MVP:
 
 Current browser implementation uses the current Figure Layout for exported
 canvas dimensions and background. The active **Export Preset** controls output
-format, DPI raster scale, and JPG quality. DPI currently controls export pixel
-ratio; writing DPI metadata into the output file remains unresolved.
+format, DPI raster scale, and JPG quality. DPI controls export pixel ratio and
+is written into PNG outputs as `pHYs` density metadata and JPG outputs as JFIF
+density metadata. Malformed export data or unsupported metadata conditions fail
+with explicit errors.
 
 Deferred:
 
@@ -251,5 +262,4 @@ inside the WebView.
 
 ## Open Questions
 
-- How strict DPI metadata handling must be in the first export implementation.
 - Whether linked inset precision mode is implemented in MVP or deferred after display-size mode.

@@ -1,9 +1,14 @@
 import { useMemo } from "react";
 import type { Dispatch, ReactElement, RefObject } from "react";
 import type Konva from "konva";
-import { Image, Rect, Transformer } from "react-konva";
+import { Image, Rect, Text, Transformer } from "react-konva";
 import { useImageAsset } from "../image/loadImageAsset";
-import type { Figure, FigureObject } from "../model/figure";
+import type {
+  Figure,
+  FigureImageObject,
+  FigureObject,
+  GenericAnnotationObject,
+} from "../model/figure";
 import type { Rect as ModelRect } from "../model/geometry";
 import type { PlacementGuide } from "../model/placementSnapping";
 import { getRoi, getSourceImage } from "../model/selectors";
@@ -13,9 +18,11 @@ import {
   dispatchResize,
   limitObjectBox,
   snapDragPosition,
+  type TransformableNode,
   updateDragGuides,
   updateTransformGuides,
 } from "./objectPlacementInteractions";
+import { EDITOR_CHROME_NODE_NAME } from "./editorChrome";
 import { useKonvaTransformer } from "./useKonvaTransformer";
 
 interface ObjectRendererProps {
@@ -31,6 +38,16 @@ export function ObjectRenderer({
   dispatch,
   onPlacementGuidesChange,
 }: ObjectRendererProps): ReactElement {
+  if (object.kind === "genericAnnotation") {
+    return (
+      <AnnotationObjectRenderer
+        figure={figure}
+        object={object}
+        dispatch={dispatch}
+        onPlacementGuidesChange={onPlacementGuidesChange}
+      />
+    );
+  }
   const sourceImage = getSourceImage(figure, object.sourceImageId);
   const image = useImageAsset(sourceImage.assetUrl);
   const crop = useMemo(() => getCrop(figure, object), [figure, object]);
@@ -50,12 +67,14 @@ export function ObjectRenderer({
 }
 
 interface LoadedFigureObjectProps extends ObjectRendererProps {
+  readonly object: FigureImageObject;
   readonly image: HTMLImageElement;
   readonly crop: ModelRect | undefined;
 }
 
-interface ObjectInteractionHandlerOptions extends ObjectRendererProps {
-  readonly nodeRef: RefObject<Konva.Image | null>;
+interface ObjectInteractionHandlerOptions<TNode extends TransformableNode>
+  extends ObjectRendererProps {
+  readonly nodeRef: RefObject<TNode | null>;
 }
 
 function LoadedFigureObject({
@@ -97,6 +116,7 @@ function LoadedFigureObject({
       />
       {selected ? (
         <Transformer
+          name={EDITOR_CHROME_NODE_NAME}
           ref={transformerRef}
           boundBoxFunc={(oldBox, newBox) =>
             limitObjectBox({ oldBox, newBox, figure, objectId: object.id })
@@ -107,13 +127,67 @@ function LoadedFigureObject({
   );
 }
 
-function createObjectInteractionHandlers({
+function AnnotationObjectRenderer({
+  figure,
+  object,
+  dispatch,
+  onPlacementGuidesChange,
+}: {
+  readonly figure: Figure;
+  readonly object: GenericAnnotationObject;
+  readonly dispatch: Dispatch<ProjectAction>;
+  readonly onPlacementGuidesChange: (guides: readonly PlacementGuide[]) => void;
+}): ReactElement {
+  const selected = figure.selectedObjectId === object.id;
+  const { nodeRef, transformerRef } = useKonvaTransformer<Konva.Text>(selected);
+  const handlers = createObjectInteractionHandlers({
+    figure,
+    object,
+    dispatch,
+    onPlacementGuidesChange,
+    nodeRef,
+  });
+  return (
+    <>
+      <Text
+        ref={nodeRef}
+        x={object.x}
+        y={object.y}
+        width={object.width}
+        height={object.height}
+        text={object.text}
+        fill={object.fill}
+        fontSize={object.fontSize}
+        verticalAlign="middle"
+        draggable={figure.tool === "select"}
+        dragBoundFunc={(position) => snapDragPosition({ position, object, figure })}
+        onMouseDown={handlers.handleSelect}
+        onTouchStart={handlers.handleSelect}
+        onDragMove={handlers.handleDragMove}
+        onDragEnd={handlers.handleDragEnd}
+        onTransform={handlers.handleTransform}
+        onTransformEnd={handlers.handleTransformEnd}
+      />
+      {selected ? (
+        <Transformer
+          name={EDITOR_CHROME_NODE_NAME}
+          ref={transformerRef}
+          boundBoxFunc={(oldBox, newBox) =>
+            limitObjectBox({ oldBox, newBox, figure, objectId: object.id })
+          }
+        />
+      ) : null}
+    </>
+  );
+}
+
+function createObjectInteractionHandlers<TNode extends TransformableNode>({
   figure,
   object,
   dispatch,
   onPlacementGuidesChange,
   nodeRef,
-}: ObjectInteractionHandlerOptions) {
+}: ObjectInteractionHandlerOptions<TNode>) {
   return {
     handleDragMove: (event: Konva.KonvaEventObject<DragEvent>) =>
       updateDragGuides({ figure, object, event, onPlacementGuidesChange }),

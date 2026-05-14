@@ -1,6 +1,8 @@
 import type Konva from "konva";
 import type { ExportPreset } from "../model/exportPreset";
 import type { Size } from "../model/geometry";
+import { runWithoutEditorChrome } from "./exportEditorChrome";
+import { applyExportDpiMetadata } from "./exportMetadata";
 import { createExportPixelSize } from "./exportPreview";
 
 const PNG_MIME_TYPE = "image/png";
@@ -16,14 +18,18 @@ export function exportStageAsFigure(
   stage: Konva.Stage,
   options: ExportFigureOptions,
 ): void {
+  runWithoutEditorChrome(stage, () => exportVisibleStage(stage, options));
+}
+
+function exportVisibleStage(stage: Konva.Stage, options: ExportFigureOptions): void {
   const outputSize = createExportPixelSize(options.preset);
   const stageCanvas = stage.toCanvas({
     pixelRatio: createExportStagePixelRatio(stage, outputSize),
   });
   const outputCanvas = createScaledOutputCanvas(stageCanvas, outputSize);
-  const dataUrl = outputCanvas.toDataURL(
-    getMimeType(options.preset),
-    options.preset.jpgQuality,
+  const dataUrl = applyExportDpiMetadata(
+    outputCanvas.toDataURL(getMimeType(options.preset), options.preset.jpgQuality),
+    options.preset,
   );
   downloadDataUrl(dataUrl, createFileName(options));
 }

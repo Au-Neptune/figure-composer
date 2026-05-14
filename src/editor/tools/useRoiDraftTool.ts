@@ -4,7 +4,7 @@ import type Konva from "konva";
 import type { Figure } from "../model/figure";
 import type { Point } from "../model/geometry";
 import { normalizeRect } from "../model/geometry";
-import { findTopFigureObjectAtPoint } from "../model/selectors";
+import { findTopSourceObjectAtPoint } from "../model/selectors";
 import { MIN_ROI_SIDE_PX } from "../state/editorDefaults";
 import type { ProjectAction } from "../state/projectStore";
 import { getStagePointer } from "./toolEvents";
@@ -65,7 +65,7 @@ export function useRoiDraftTool({
 }
 
 function createDraftRoi(figure: Figure, pointer: Point): DraftRoi | null {
-  const sourceObject = findTopFigureObjectAtPoint(figure, pointer);
+  const sourceObject = findTopSourceObjectAtPoint(figure, pointer);
   if (!sourceObject) {
     return null;
   }

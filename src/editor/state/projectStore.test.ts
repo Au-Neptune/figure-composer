@@ -194,6 +194,7 @@ describe("projectReducer", () => {
       }),
     ).toThrow("Figure object not found");
   });
+
 });
 
 function createFigureWithSourceImage(): Figure {

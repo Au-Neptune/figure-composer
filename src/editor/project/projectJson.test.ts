@@ -82,8 +82,29 @@ describe("projectJson", () => {
     expect(derived?.lineage).toEqual({
       kind: "derived",
       parentSourceImageId: figure.sourceImages[0]?.id,
+      operation: {
+        kind: "crop",
+        roiId: figure.rois[0]?.id,
+        cropRect: figure.rois[0]?.rect,
+      },
       roiId: figure.rois[0]?.id,
       cropRect: figure.rois[0]?.rect,
+    });
+  });
+
+  it("preserves generic annotations through project JSON", () => {
+    const figure = projectReducer(createInitialProject(), {
+      type: "genericAnnotationAdded",
+    });
+    const projectJson = createProjectJson(figure);
+    const parsed = parseProjectJsonText(JSON.stringify(projectJson));
+    const hydrated = hydrateFigure(parsed, new Map());
+
+    expect(hydrated.objects[0]).toMatchObject({
+      kind: "genericAnnotation",
+      text: "Annotation",
+      fill: "#263126",
+      fontSize: 18,
     });
   });
 });
@@ -139,6 +160,7 @@ function createFigureWithDerivedSourceImage(): Figure {
         lineage: {
           kind: "derived",
           parentSourceImageId: parent.id,
+          operation: { kind: "crop", roiId: roi.id, cropRect: roi.rect },
           roiId: roi.id,
           cropRect: roi.rect,
         },

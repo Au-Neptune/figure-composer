@@ -29,9 +29,12 @@ export function Workspace({ controller }: WorkspaceProps): ReactElement {
         onCanvasSettingsChange={controller.handleCanvasSettingsChange}
         onDockInset={controller.handleDockInset}
         onDeleteRoi={controller.handleDeleteRoi}
+        onCropRoiToSourceImage={controller.handleCropRoiToSourceImage}
         onSelectFigureObject={controller.handleSelectFigureObject}
         onRenameSourceImage={controller.handleRenameSourceImage}
         onDeleteSourceImage={controller.handleDeleteSourceImage}
+        onResizeSourceImage={controller.handleResizeSourceImage}
+        onRotateSourceImage={controller.handleRotateSourceImage}
       />
       <WorkspaceSplitter side="left" onPointerDown={sizing.startPanelResize} />
       <div className="stage-viewport">
@@ -45,6 +48,7 @@ export function Workspace({ controller }: WorkspaceProps): ReactElement {
       <SelectionPanel
         figure={controller.figure}
         onObjectBoundsChange={controller.handleFigureObjectBoundsChange}
+        onAnnotationTextChange={controller.handleAnnotationTextChange}
       />
     </section>
   );

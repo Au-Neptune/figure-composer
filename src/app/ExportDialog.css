@@ -109,6 +109,7 @@
 
 .export-preview-image,
 .export-preview-inset,
+.export-preview-annotation,
 .export-preview-roi {
   position: absolute;
 }
@@ -129,6 +130,14 @@
 .export-preview-roi {
   border-style: solid;
   pointer-events: none;
+}
+
+.export-preview-annotation {
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  line-height: 1.2;
+  white-space: pre-wrap;
 }
 
 @media (max-width: 760px) {

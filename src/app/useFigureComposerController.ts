@@ -1,7 +1,6 @@
 import { useReducer, useRef, useState } from "react";
 import type { ChangeEvent, Dispatch, RefObject } from "react";
 import type Konva from "konva";
-import { exportStageAsFigure } from "../editor/export/exportFigure";
 import { syncExportPresetToCanvas } from "../editor/export/exportPresetSync";
 import type { ExportPreset, ExportPresetPatch } from "../editor/model/exportPreset";
 import type {
@@ -23,13 +22,17 @@ import {
 } from "../editor/state/historyStore";
 import type { ProjectAction } from "../editor/state/projectStore";
 import type { FigureComposerPlatform } from "../platform/appPlatform";
+import { createExportHandlers } from "./exportFigureHandlers";
 import {
   createFileInputImportHandler,
   createImportFilesHandler,
 } from "./sourceImageImport";
 import {
+  createCropRoiToSourceImageHandler,
   createDeleteSourceImageHandler,
   createRenameSourceImageHandler,
+  createResizeSourceImageHandler,
+  createRotateSourceImageHandler,
 } from "./sourceImageHandlers";
 import { useEditorShortcuts } from "./useEditorShortcuts";
 import { runWithVisibleCommand, runWithVisibleError } from "./visibleErrors";
@@ -50,6 +53,8 @@ export interface FigureComposerController {
   readonly handleUndo: () => void;
   readonly handleRedo: () => void;
   readonly handleToolChange: (tool: ToolMode) => void;
+  readonly handleAddGenericAnnotation: () => void;
+  readonly handleAnnotationTextChange: (objectId: string, text: string) => void;
   readonly handleOpenExportDialog: () => void;
   readonly handleCloseExportDialog: () => void;
   readonly handleConfirmExportFigure: () => void;
@@ -61,11 +66,14 @@ export interface FigureComposerController {
     patch: FigureObjectBoundsPatch,
   ) => void;
   readonly handleDeleteRoi: (roiId: string) => boolean;
+  readonly handleCropRoiToSourceImage: (roiId: string) => Promise<boolean>;
   readonly handleRenameSourceImage: (
     sourceImageId: string,
     name: string,
   ) => boolean;
   readonly handleDeleteSourceImage: (sourceImageId: string) => boolean;
+  readonly handleResizeSourceImage: (sourceImageId: string) => Promise<boolean>;
+  readonly handleRotateSourceImage: (sourceImageId: string) => Promise<boolean>;
   readonly handleExportPresetChange: (patch: ExportPresetPatch) => void;
 }
 
@@ -115,8 +123,14 @@ export function useFigureComposerController(
   useEditorShortcuts({
     canUndo: undoAvailable,
     canRedo: redoAvailable,
+    canDeleteSelection: hasSelectedComponent(figure),
     onUndo: () => dispatch({ type: "undoRequested" }),
     onRedo: () => dispatch({ type: "redoRequested" }),
+    onDeleteSelection: () =>
+      runWithVisibleCommand(
+        () => dispatch({ type: "selectedComponentDeleted" }),
+        setErrorMessage,
+      ),
   });
 
   return {
@@ -173,6 +187,9 @@ function createControllerHandlers({
     handleUndo: () => dispatch({ type: "undoRequested" }),
     handleRedo: () => dispatch({ type: "redoRequested" }),
     handleToolChange: (tool) => dispatch({ type: "toolChanged", tool }),
+    handleAddGenericAnnotation: () => dispatch({ type: "genericAnnotationAdded" }),
+    handleAnnotationTextChange: (objectId, text) =>
+      dispatch({ type: "genericAnnotationTextChanged", objectId, text }),
     ...createExportHandlers({ exportPreset, dispatch, setExportDialogOpen, stageRef }),
     handleCanvasSettingsChange: (patch) => dispatch({ type: "canvasSettingsChanged", patch }),
     handleDockInset: (objectId, side) => dispatch({ type: "insetDocked", objectId, side }),
@@ -182,6 +199,11 @@ function createControllerHandlers({
       runWithVisibleCommand(() => {
         dispatch({ type: "roiDeleted", roiId });
       }, setErrorMessage),
+    handleCropRoiToSourceImage: createCropRoiToSourceImageHandler({
+      figure,
+      dispatch,
+      setErrorMessage,
+    }),
     handleRenameSourceImage: createRenameSourceImageHandler({
       figure,
       dispatch,
@@ -192,35 +214,16 @@ function createControllerHandlers({
       dispatch,
       setErrorMessage,
     }),
-  };
-}
-
-function createExportHandlers({
-  exportPreset,
-  dispatch,
-  setExportDialogOpen,
-  stageRef,
-}: {
-  readonly exportPreset: ExportPreset;
-  readonly dispatch: Dispatch<HistoryAction>;
-  readonly setExportDialogOpen: (open: boolean) => void;
-  readonly stageRef: RefObject<Konva.Stage | null>;
-}): Pick<
-  FigureComposerHandlers,
-  | "handleOpenExportDialog"
-  | "handleCloseExportDialog"
-  | "handleConfirmExportFigure"
-  | "handleExportPresetChange"
-> {
-  return {
-    handleOpenExportDialog: () => setExportDialogOpen(true),
-    handleCloseExportDialog: () => setExportDialogOpen(false),
-    handleConfirmExportFigure: () => {
-      exportFigure(stageRef.current, exportPreset);
-      setExportDialogOpen(false);
-    },
-    handleExportPresetChange: (patch) =>
-      dispatch({ type: "exportPresetChanged", presetId: exportPreset.id, patch }),
+    handleResizeSourceImage: createResizeSourceImageHandler({
+      figure,
+      dispatch,
+      setErrorMessage,
+    }),
+    handleRotateSourceImage: createRotateSourceImageHandler({
+      figure,
+      dispatch,
+      setErrorMessage,
+    }),
   };
 }
 
@@ -252,6 +255,10 @@ function getPrimaryExportPreset(exportPresets: readonly ExportPreset[]): ExportP
   return preset;
 }
 
+function hasSelectedComponent(figure: Figure): boolean {
+  return Boolean(figure.selectedObjectId ?? figure.selectedRoiId);
+}
+
 function createOpenProjectHandler(
   dispatch: Dispatch<ProjectAction>,
   setErrorMessage: (message: string | null) => void,
@@ -266,11 +273,4 @@ function createOpenProjectHandler(
     dispatch({ type: "projectOpened", figure: openedFigure });
     revokeHistoryAssetUrls(history);
   };
-}
-
-function exportFigure(stage: Konva.Stage | null, preset: ExportPreset): void {
-  if (!stage) {
-    throw new Error("Figure export requires a mounted Figure Stage.");
-  }
-  exportStageAsFigure(stage, { fileBasename: "figure-composer-export", preset });
 }

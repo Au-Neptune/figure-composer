@@ -2,12 +2,12 @@ import type { ExportPreset, ExportFormat } from "../model/exportPreset";
 import type {
   CanvasSettings,
   FigureObject,
+  GenericAnnotationObject,
   InsetObject,
   SourceImageObject,
 } from "../model/figure";
 import type { Rect } from "../model/geometry";
 import type { RegionOfInterest, RoiFrameStyle } from "../model/roi";
-import type { SourceImageLineage } from "../model/sourceImage";
 import {
   MAX_JPG_QUALITY,
   MIN_EXPORT_DIMENSION,
@@ -21,6 +21,7 @@ import {
   type SerializedFigure,
   type SerializedSourceImage,
 } from "./projectJson";
+import { parseSourceImageLineage } from "./projectJsonLineageValidation";
 import { validateProjectReferences } from "./projectReferences";
 
 export function parseProjectJsonText(text: string): ProjectJson {
@@ -75,35 +76,6 @@ function parseSourceImage(value: unknown): SerializedSourceImage {
   };
 }
 
-function parseSourceImageLineage(value: unknown): SourceImageLineage {
-  if (value === undefined) {
-    return { kind: "imported" };
-  }
-  const record = readRecord(value, "Source Image lineage");
-  const kind = readString(record.kind, "Source Image lineage kind");
-  if (kind === "imported") {
-    return { kind: "imported" };
-  }
-  if (kind === "derived") {
-    return parseDerivedSourceImageLineage(record);
-  }
-  throw new Error(`Unsupported Source Image lineage kind: ${kind}`);
-}
-
-function parseDerivedSourceImageLineage(
-  record: Record<string, unknown>,
-): SourceImageLineage {
-  return {
-    kind: "derived",
-    parentSourceImageId: readString(
-      record.parentSourceImageId,
-      "Derived Source Image parent id",
-    ),
-    roiId: readString(record.roiId, "Derived Source Image ROI id"),
-    cropRect: parseRect(record.cropRect, "Derived Source Image crop rect"),
-  };
-}
-
 function parseFigureObject(value: unknown): FigureObject {
   const record = readRecord(value, "Figure object");
   const kind = readString(record.kind, "Figure object kind");
@@ -112,6 +84,9 @@ function parseFigureObject(value: unknown): FigureObject {
   }
   if (kind === "inset") {
     return parseInsetObject(record);
+  }
+  if (kind === "genericAnnotation") {
+    return parseGenericAnnotationObject(record);
   }
   throw new Error(`Unsupported Figure object kind: ${kind}`);
 }
@@ -132,6 +107,18 @@ function parseInsetObject(record: Record<string, unknown>): InsetObject {
     kind: "inset",
     sourceImageId: readString(record.sourceImageId, "Inset source id"),
     roiId: readString(record.roiId, "Inset ROI id"),
+  };
+}
+
+function parseGenericAnnotationObject(
+  record: Record<string, unknown>,
+): GenericAnnotationObject {
+  return {
+    ...parseObjectBounds(record),
+    kind: "genericAnnotation",
+    text: readString(record.text, "Generic Annotation text"),
+    fill: readString(record.fill, "Generic Annotation fill"),
+    fontSize: readNumber(record.fontSize, "Generic Annotation font size"),
   };
 }
 

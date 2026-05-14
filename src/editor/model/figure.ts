@@ -32,7 +32,15 @@ export interface InsetObject extends FigureObjectBase {
   readonly roiId: string;
 }
 
-export type FigureObject = SourceImageObject | InsetObject;
+export interface GenericAnnotationObject extends FigureObjectBase {
+  readonly kind: "genericAnnotation";
+  readonly text: string;
+  readonly fill: string;
+  readonly fontSize: number;
+}
+
+export type FigureImageObject = SourceImageObject | InsetObject;
+export type FigureObject = FigureImageObject | GenericAnnotationObject;
 
 export interface Figure {
   readonly id: string;

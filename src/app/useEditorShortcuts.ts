@@ -3,15 +3,19 @@ import { useEffect } from "react";
 interface EditorShortcutsOptions {
   readonly canUndo: boolean;
   readonly canRedo: boolean;
+  readonly canDeleteSelection: boolean;
   readonly onUndo: () => void;
   readonly onRedo: () => void;
+  readonly onDeleteSelection: () => void;
 }
 
 export function useEditorShortcuts({
   canUndo,
   canRedo,
+  canDeleteSelection,
   onUndo,
   onRedo,
+  onDeleteSelection,
 }: EditorShortcutsOptions): void {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -26,15 +30,24 @@ export function useEditorShortcuts({
         event.preventDefault();
         onRedo();
       }
+      if (isDeleteShortcut(event) && canDeleteSelection) {
+        event.preventDefault();
+        onDeleteSelection();
+      }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [canRedo, canUndo, onRedo, onUndo]);
+  }, [canDeleteSelection, canRedo, canUndo, onDeleteSelection, onRedo, onUndo]);
 }
 
 function shouldIgnoreShortcut(event: KeyboardEvent): boolean {
   const target = event.target;
-  return target instanceof HTMLInputElement || target instanceof HTMLSelectElement;
+  return (
+    target instanceof HTMLInputElement ||
+    target instanceof HTMLSelectElement ||
+    target instanceof HTMLTextAreaElement ||
+    isEditableElement(target)
+  );
 }
 
 function isUndoShortcut(event: KeyboardEvent): boolean {
@@ -46,7 +59,18 @@ function isRedoShortcut(event: KeyboardEvent): boolean {
   return isCommandKey(event) && (key === "y" || (key === "z" && event.shiftKey));
 }
 
+function isDeleteShortcut(event: KeyboardEvent): boolean {
+  return (
+    !isCommandKey(event) &&
+    !event.altKey &&
+    (event.key === "Delete" || event.key === "Backspace")
+  );
+}
+
 function isCommandKey(event: KeyboardEvent): boolean {
   return event.ctrlKey || event.metaKey;
 }
 
+function isEditableElement(target: EventTarget | null): boolean {
+  return target instanceof HTMLElement && target.isContentEditable;
+}

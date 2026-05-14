@@ -2,6 +2,7 @@ import type { ExportPreset } from "../model/exportPreset";
 import type { Figure, SourceImageObject } from "../model/figure";
 import { fitWithin } from "../model/geometry";
 import type {
+  DerivedSourceImageOperation,
   ImportedSourceImage,
   SourceImage,
   SourceImageLineage,
@@ -50,6 +51,29 @@ export function addSourceImageToFigure(
   });
 }
 
+export interface DerivedSourceImageInput extends ImportedSourceImage {
+  readonly parentSourceImageId: string;
+  readonly operation: DerivedSourceImageOperation;
+}
+
+export function addDerivedSourceImageToFigure(
+  figure: Figure,
+  derived: DerivedSourceImageInput,
+): Figure {
+  return addSourceImageAssetToFigure(figure, {
+    name: derived.name,
+    assetUrl: derived.assetUrl,
+    width: derived.width,
+    height: derived.height,
+    lineage: {
+      kind: "derived",
+      parentSourceImageId: derived.parentSourceImageId,
+      operation: derived.operation,
+      ...createLegacyCropLineageFields(derived.operation),
+    },
+  });
+}
+
 interface SourceImageAssetInput extends ImportedSourceImage {
   readonly lineage: SourceImageLineage;
 }
@@ -91,6 +115,12 @@ function createDefaultExportPreset(): ExportPreset {
     background: DEFAULT_CANVAS_BACKGROUND,
     jpgQuality: DEFAULT_JPG_QUALITY,
   };
+}
+
+function createLegacyCropLineageFields(operation: DerivedSourceImageOperation) {
+  return operation.kind === "crop"
+    ? { roiId: operation.roiId, cropRect: operation.cropRect }
+    : {};
 }
 
 function createSourceImageObject(

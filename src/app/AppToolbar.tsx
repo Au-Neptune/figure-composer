@@ -7,6 +7,7 @@ import {
   Redo2,
   Save,
   ScanSearch,
+  Type,
   Undo2,
 } from "lucide-react";
 import type { ToolMode } from "../editor/model/figure";
@@ -21,6 +22,7 @@ interface AppToolbarProps {
   readonly canUndo: boolean;
   readonly canRedo: boolean;
   readonly onToolChange: (tool: ToolMode) => void;
+  readonly onAddGenericAnnotation: () => void;
   readonly onExportFigure: () => void;
 }
 
@@ -112,6 +114,7 @@ function HistoryButtons({
 function EditorToolButtons({
   activeTool,
   onToolChange,
+  onAddGenericAnnotation,
 }: AppToolbarProps): ReactElement {
   return (
     <>
@@ -126,6 +129,12 @@ function EditorToolButtons({
         active={activeTool === "roi"}
         onClick={() => onToolChange("roi")}
         icon={<ScanSearch size={18} aria-hidden="true" />}
+      />
+      <ToolButton
+        label="Text"
+        active={false}
+        onClick={onAddGenericAnnotation}
+        icon={<Type size={18} aria-hidden="true" />}
       />
     </>
   );

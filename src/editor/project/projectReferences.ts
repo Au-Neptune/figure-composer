@@ -1,4 +1,5 @@
-import type { FigureObject, InsetObject } from "../model/figure";
+import type { FigureImageObject, FigureObject, InsetObject } from "../model/figure";
+import { isFigureImageObject } from "../model/selectors";
 import type { RegionOfInterest } from "../model/roi";
 import type { SerializedFigure, SerializedSourceImage } from "./projectJson";
 
@@ -33,6 +34,9 @@ function validateFigureObjectReferences(
   index: ReferenceIndex,
 ): void {
   for (const object of objects) {
+    if (!isFigureImageObject(object)) {
+      continue;
+    }
     assertSourceImageExists(index, object.sourceImageId, `Figure object ${object.id}`);
     if (object.kind === "inset") {
       validateInsetReference(object, index);
@@ -70,6 +74,9 @@ function validateRoiSourceObject(
   const object = index.objectsById.get(roi.sourceObjectId);
   if (!object) {
     throw new Error(`ROI ${roi.id} references missing source object.`);
+  }
+  if (!isFigureImageObject(object)) {
+    throw new Error(`ROI ${roi.id} cannot use annotation ${object.id} as source.`);
   }
   if (object.sourceImageId !== roi.sourceImageId) {
     throw new Error(`ROI ${roi.id} source does not match object ${object.id}.`);
@@ -111,9 +118,12 @@ function validateSourceImageLineage(
     sourceImage.lineage.parentSourceImageId,
     `Derived Source Image ${sourceImage.id}`,
   );
-  if (!index.roisById.has(sourceImage.lineage.roiId)) {
+  if (sourceImage.lineage.operation.kind !== "crop") {
+    return;
+  }
+  if (!index.roisById.has(sourceImage.lineage.operation.roiId)) {
     throw new Error(
-      `Derived Source Image ${sourceImage.id} references missing ROI: ${sourceImage.lineage.roiId}`,
+      `Derived Source Image ${sourceImage.id} references missing ROI: ${sourceImage.lineage.operation.roiId}`,
     );
   }
 }

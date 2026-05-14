@@ -44,9 +44,11 @@ export function dispatchMove({
 
 interface DispatchResizeOptions extends PlacementGuideWriter {
   readonly objectId: string;
-  readonly node: Konva.Image | null;
+  readonly node: TransformableNode | null;
   readonly dispatch: Dispatch<ProjectAction>;
 }
+
+export type TransformableNode = Konva.Image | Konva.Text;
 
 export function dispatchResize({
   objectId,
@@ -113,7 +115,7 @@ export function updateTransformGuides({
 }: {
   readonly figure: Figure;
   readonly object: FigureObject;
-  readonly node: Konva.Image | null;
+  readonly node: TransformableNode | null;
   readonly onPlacementGuidesChange: (guides: readonly PlacementGuide[]) => void;
 }): void {
   if (!node) {
@@ -156,7 +158,7 @@ export function limitObjectBox({
   return { ...newBox, ...snapped.rect };
 }
 
-function readTransformedBounds(node: Konva.Image): ModelRect {
+function readTransformedBounds(node: TransformableNode): ModelRect {
   return {
     x: node.x(),
     y: node.y(),

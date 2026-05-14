@@ -20,6 +20,7 @@ body {
 
 button,
 input,
+textarea,
 select {
   font: inherit;
 }
@@ -166,14 +167,25 @@ select {
 }
 
 .field-row input,
+.field-row textarea,
 .field-row select {
   min-width: 0;
-  height: 32px;
   border: 1px solid #b9c4b2;
   border-radius: 6px;
   background: #ffffff;
   color: #1f261f;
+}
+
+.field-row input,
+.field-row select {
+  height: 32px;
   padding: 0 8px;
+}
+
+.field-row textarea {
+  min-height: 72px;
+  resize: vertical;
+  padding: 7px 8px;
 }
 
 .field-row input[type="color"] {

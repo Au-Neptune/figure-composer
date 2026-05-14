@@ -87,7 +87,9 @@ function getDerivedSourceImageBlocker(
 ): RoiDeleteBlocker | null {
   const derivedSourceImage = figure.sourceImages.find(
     (sourceImage) =>
-      sourceImage.lineage.kind === "derived" && sourceImage.lineage.roiId === roiId,
+      sourceImage.lineage.kind === "derived" &&
+      sourceImage.lineage.operation.kind === "crop" &&
+      sourceImage.lineage.operation.roiId === roiId,
   );
   if (!derivedSourceImage) {
     return null;

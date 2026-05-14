@@ -82,6 +82,11 @@ function findBlockingReferences(
       references.add(object.id);
     }
   }
+  for (const item of figure.sourceImages) {
+    if (item.lineage.kind === "derived" && item.lineage.parentSourceImageId === sourceImage.id) {
+      references.add(item.id);
+    }
+  }
   return [...references].sort();
 }
 

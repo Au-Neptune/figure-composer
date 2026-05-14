@@ -2,6 +2,7 @@ import type { ReactElement } from "react";
 import { Line } from "react-konva";
 import type { Size } from "../model/geometry";
 import type { PlacementGuide } from "../model/placementSnapping";
+import { EDITOR_CHROME_NODE_NAME } from "./editorChrome";
 
 const GUIDE_STROKE = "#28766f";
 const GUIDE_STROKE_WIDTH = 1;
@@ -24,6 +25,7 @@ export function PlacementGuideOverlay({
       {guides.map((guide, index) => (
         <Line
           key={`${guide.axis}-${guide.position}-${index}`}
+          name={EDITOR_CHROME_NODE_NAME}
           points={createGuidePoints(guide, canvas)}
           stroke={GUIDE_STROKE}
           strokeWidth={GUIDE_STROKE_WIDTH}

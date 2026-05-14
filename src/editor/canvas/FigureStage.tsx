@@ -13,6 +13,7 @@ import { CanvasResizeHandle } from "./CanvasResizeHandle";
 import { ObjectRenderer } from "./ObjectRenderer";
 import { PlacementGuideOverlay } from "./PlacementGuideOverlay";
 import { RoiFrameRenderer } from "./RoiFrameRenderer";
+import { EDITOR_CHROME_NODE_NAME } from "./editorChrome";
 
 interface FigureStageProps {
   readonly figure: Figure;
@@ -170,6 +171,7 @@ function DraftRoiRect({
   }
   return (
     <Rect
+      name={EDITOR_CHROME_NODE_NAME}
       x={rect.x}
       y={rect.y}
       width={rect.width}

@@ -4,6 +4,7 @@ import { Group, Line, Rect } from "react-konva";
 import type { Size, Point } from "../model/geometry";
 import { MIN_EXPORT_DIMENSION } from "../state/editorDefaults";
 import type { ProjectAction } from "../state/projectStore";
+import { EDITOR_CHROME_NODE_NAME } from "./editorChrome";
 
 const HANDLE_SIZE = 22;
 const HANDLE_FILL = "#ffffff";
@@ -34,6 +35,7 @@ export function CanvasResizeHandle({
   };
   return (
     <Group
+      name={EDITOR_CHROME_NODE_NAME}
       x={position.x}
       y={position.y}
       draggable

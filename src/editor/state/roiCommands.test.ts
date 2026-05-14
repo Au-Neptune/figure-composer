@@ -90,6 +90,7 @@ function createFigureWithDerivedSource(): Figure {
         lineage: {
           kind: "derived",
           parentSourceImageId: parent.id,
+          operation: { kind: "crop", roiId: roi.id, cropRect: roi.rect },
           roiId: roi.id,
           cropRect: roi.rect,
         },

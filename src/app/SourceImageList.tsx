@@ -1,4 +1,12 @@
-import { Check, Image as ImageIcon, Pencil, Trash2, X } from "lucide-react";
+import {
+  Check,
+  Image as ImageIcon,
+  Pencil,
+  RotateCw,
+  Shrink,
+  Trash2,
+  X,
+} from "lucide-react";
 import { useState, type FormEvent, type ReactElement } from "react";
 import type { Figure, SourceImageObject } from "../editor/model/figure";
 import type { SourceImage } from "../editor/model/sourceImage";
@@ -9,6 +17,8 @@ interface SourceImageListProps {
   readonly onSelectFigureObject: (objectId: string) => void;
   readonly onRenameSourceImage: (sourceImageId: string, name: string) => boolean;
   readonly onDeleteSourceImage: (sourceImageId: string) => boolean;
+  readonly onResizeSourceImage: (sourceImageId: string) => Promise<boolean>;
+  readonly onRotateSourceImage: (sourceImageId: string) => Promise<boolean>;
 }
 
 interface SourceImageListItem {
@@ -22,6 +32,8 @@ interface SourceImageItemProps {
   readonly onSelectFigureObject: (objectId: string) => void;
   readonly onRenameSourceImage: (sourceImageId: string, name: string) => boolean;
   readonly onDeleteSourceImage: (sourceImageId: string) => boolean;
+  readonly onResizeSourceImage: (sourceImageId: string) => Promise<boolean>;
+  readonly onRotateSourceImage: (sourceImageId: string) => Promise<boolean>;
 }
 
 interface SourceImageDisplayProps {
@@ -30,6 +42,8 @@ interface SourceImageDisplayProps {
   readonly onSelectFigureObject: (objectId: string) => void;
   readonly onStartRename: () => void;
   readonly onDeleteSourceImage: (sourceImageId: string) => boolean;
+  readonly onResizeSourceImage: (sourceImageId: string) => Promise<boolean>;
+  readonly onRotateSourceImage: (sourceImageId: string) => Promise<boolean>;
 }
 
 export function SourceImageList({
@@ -37,6 +51,8 @@ export function SourceImageList({
   onSelectFigureObject,
   onRenameSourceImage,
   onDeleteSourceImage,
+  onResizeSourceImage,
+  onRotateSourceImage,
 }: SourceImageListProps): ReactElement {
   const items = figure.sourceImages.map((sourceImage) => ({
     sourceImage,
@@ -55,6 +71,8 @@ export function SourceImageList({
               onSelectFigureObject={onSelectFigureObject}
               onRenameSourceImage={onRenameSourceImage}
               onDeleteSourceImage={onDeleteSourceImage}
+              onResizeSourceImage={onResizeSourceImage}
+              onRotateSourceImage={onRotateSourceImage}
             />
           ))
         ) : (
@@ -71,6 +89,8 @@ function SourceImageItem({
   onSelectFigureObject,
   onRenameSourceImage,
   onDeleteSourceImage,
+  onResizeSourceImage,
+  onRotateSourceImage,
 }: SourceImageItemProps): ReactElement {
   const [editing, setEditing] = useState(false);
   const [draftName, setDraftName] = useState(item.sourceImage.name);
@@ -100,6 +120,8 @@ function SourceImageItem({
         setEditing(true);
       }}
       onDeleteSourceImage={onDeleteSourceImage}
+      onResizeSourceImage={onResizeSourceImage}
+      onRotateSourceImage={onRotateSourceImage}
     />
   );
 }
@@ -110,6 +132,8 @@ function SourceImageDisplay({
   onSelectFigureObject,
   onStartRename,
   onDeleteSourceImage,
+  onResizeSourceImage,
+  onRotateSourceImage,
 }: SourceImageDisplayProps): ReactElement {
   return (
     <div className={`source-image-item${selected ? " is-selected" : ""}`}>
@@ -122,6 +146,24 @@ function SourceImageDisplay({
         <SourceImageSummary item={item} />
       </button>
       <div className="source-image-actions">
+        <button
+          className="source-image-icon-button"
+          type="button"
+          title="Create 50% Derived Source Image"
+          aria-label={`Resize ${item.sourceImage.name}`}
+          onClick={() => void onResizeSourceImage(item.sourceImage.id)}
+        >
+          <Shrink size={15} strokeWidth={2} />
+        </button>
+        <button
+          className="source-image-icon-button"
+          type="button"
+          title="Create 90 degree Derived Source Image"
+          aria-label={`Rotate ${item.sourceImage.name}`}
+          onClick={() => void onRotateSourceImage(item.sourceImage.id)}
+        >
+          <RotateCw size={15} strokeWidth={2} />
+        </button>
         <button
           className="source-image-icon-button"
           type="button"

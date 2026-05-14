@@ -1,5 +1,9 @@
 import type { ChangeEvent, ReactElement } from "react";
-import type { Figure, FigureObject } from "../editor/model/figure";
+import type {
+  Figure,
+  FigureObject,
+  GenericAnnotationObject,
+} from "../editor/model/figure";
 import type { Rect } from "../editor/model/geometry";
 import { getFigureObject, getSourceImage } from "../editor/model/selectors";
 import type { SourceImage } from "../editor/model/sourceImage";
@@ -15,16 +19,18 @@ interface SelectionPanelProps {
     objectId: string,
     patch: ObjectBoundsPatch,
   ) => void;
+  readonly onAnnotationTextChange: (objectId: string, text: string) => void;
 }
 
 interface SelectedObjectDetails {
   readonly object: FigureObject;
-  readonly sourceImage: SourceImage;
+  readonly sourceImage: SourceImage | null;
 }
 
 export function SelectionPanel({
   figure,
   onObjectBoundsChange,
+  onAnnotationTextChange,
 }: SelectionPanelProps): ReactElement {
   const selection = getSelectedObjectDetails(figure);
   return (
@@ -34,9 +40,10 @@ export function SelectionPanel({
         <SelectedImageForm
           selection={selection}
           onObjectBoundsChange={onObjectBoundsChange}
+          onAnnotationTextChange={onAnnotationTextChange}
         />
       ) : (
-        <p className="selection-empty">No image selected.</p>
+        <p className="selection-empty">No object selected.</p>
       )}
     </aside>
   );
@@ -45,21 +52,50 @@ export function SelectionPanel({
 function SelectedImageForm({
   selection,
   onObjectBoundsChange,
+  onAnnotationTextChange,
 }: {
   readonly selection: SelectedObjectDetails;
   readonly onObjectBoundsChange: (
     objectId: string,
     patch: ObjectBoundsPatch,
   ) => void;
+  readonly onAnnotationTextChange: (objectId: string, text: string) => void;
 }): ReactElement {
   return (
     <div className="selection-content">
       <SelectionSummary selection={selection} />
+      {selection.object.kind === "genericAnnotation" ? (
+        <AnnotationTextEditor
+          object={selection.object}
+          onAnnotationTextChange={onAnnotationTextChange}
+        />
+      ) : null}
       <BoundsEditor
         object={selection.object}
         onObjectBoundsChange={onObjectBoundsChange}
       />
     </div>
+  );
+}
+
+function AnnotationTextEditor({
+  object,
+  onAnnotationTextChange,
+}: {
+  readonly object: GenericAnnotationObject;
+  readonly onAnnotationTextChange: (objectId: string, text: string) => void;
+}): ReactElement {
+  return (
+    <label className="field-row selection-text-field">
+      <span>Text</span>
+      <textarea
+        rows={3}
+        value={object.text}
+        onChange={(event) =>
+          onAnnotationTextChange(object.id, event.currentTarget.value)
+        }
+      />
+    </label>
   );
 }
 
@@ -71,13 +107,17 @@ function SelectionSummary({
   return (
     <dl className="selection-summary">
       <dt>Name</dt>
-      <dd>{selection.sourceImage.name}</dd>
+      <dd>{getSelectionName(selection)}</dd>
       <dt>Type</dt>
-      <dd>{selection.object.kind === "sourceImage" ? "Source Image" : "Inset"}</dd>
-      <dt>Source Pixels</dt>
-      <dd>
-        {selection.sourceImage.width} x {selection.sourceImage.height}
-      </dd>
+      <dd>{getObjectTypeLabel(selection.object)}</dd>
+      {selection.sourceImage ? (
+        <>
+          <dt>Source Pixels</dt>
+          <dd>
+            {selection.sourceImage.width} x {selection.sourceImage.height}
+          </dd>
+        </>
+      ) : null}
     </dl>
   );
 }
@@ -131,8 +171,26 @@ function getSelectedObjectDetails(figure: Figure): SelectedObjectDetails | null 
     return null;
   }
   const object = getFigureObject(figure, figure.selectedObjectId);
-  const sourceImage = getSourceImage(figure, object.sourceImageId);
+  const sourceImage =
+    object.kind === "genericAnnotation" ? null : getSourceImage(figure, object.sourceImageId);
   return { object, sourceImage };
+}
+
+function getSelectionName(selection: SelectedObjectDetails): string {
+  if (selection.object.kind === "genericAnnotation") {
+    return selection.object.text;
+  }
+  return selection.sourceImage?.name ?? "Missing Source Image";
+}
+
+function getObjectTypeLabel(object: FigureObject): string {
+  if (object.kind === "sourceImage") {
+    return "Source Image";
+  }
+  if (object.kind === "inset") {
+    return "Inset";
+  }
+  return "Annotation";
 }
 
 function updateNumberField(

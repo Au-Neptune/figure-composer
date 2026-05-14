@@ -3,15 +3,17 @@ import type Konva from "konva";
 import type { Box } from "konva/lib/shapes/Transformer";
 import { Rect, Transformer } from "react-konva";
 import { MIN_ROI_SIDE_PX } from "../state/editorDefaults";
-import type { Figure, FigureObject } from "../model/figure";
+import type { Figure, FigureImageObject } from "../model/figure";
 import type { Point, Rect as ModelRect } from "../model/geometry";
 import { constrainRectWithinRect } from "../model/geometry";
 import {
   getFigureObject,
+  isFigureImageObject,
   mapSourceRectToStageRect,
 } from "../model/selectors";
 import type { RegionOfInterest } from "../model/roi";
 import type { ProjectAction } from "../state/projectStore";
+import { EDITOR_CHROME_NODE_NAME } from "./editorChrome";
 import { useKonvaTransformer } from "./useKonvaTransformer";
 
 interface RoiFrameRendererProps {
@@ -26,6 +28,9 @@ export function RoiFrameRenderer({
   dispatch,
 }: RoiFrameRendererProps): ReactElement | null {
   const sourceObject = getFigureObject(figure, roi.sourceObjectId);
+  if (!isFigureImageObject(sourceObject)) {
+    throw new Error("ROI frame source must be a Source Image or Inset object.");
+  }
   const stageRect = mapSourceRectToStageRect(roi.rect, figure, sourceObject);
   if (!roi.frame.visible) {
     return null;
@@ -42,7 +47,7 @@ export function RoiFrameRenderer({
 }
 
 interface VisibleRoiFrameProps extends RoiFrameRendererProps {
-  readonly sourceObject: FigureObject;
+  readonly sourceObject: FigureImageObject;
   readonly stageRect: ModelRect;
 }
 
@@ -85,6 +90,7 @@ function VisibleRoiFrame({
       />
       {selected ? (
         <Transformer
+          name={EDITOR_CHROME_NODE_NAME}
           ref={transformerRef}
           boundBoxFunc={(oldBox, newBox) =>
             limitRoiBox(oldBox, newBox, sourceObject)
@@ -141,7 +147,7 @@ function dispatchRoiResize(
 function constrainRoiDragPosition(
   position: Point,
   stageRect: ModelRect,
-  sourceObject: FigureObject,
+  sourceObject: FigureImageObject,
 ): Point {
   const rect = constrainRectWithinRect({ ...stageRect, ...position }, sourceObject);
   return { x: rect.x, y: rect.y };
@@ -170,7 +176,7 @@ function selectRoiFrame({
 function limitRoiBox(
   oldBox: Box,
   newBox: Box,
-  sourceObject: FigureObject,
+  sourceObject: FigureImageObject,
 ): Box {
   if (newBox.width < MIN_ROI_SIDE_PX || newBox.height < MIN_ROI_SIDE_PX) {
     return oldBox;
@@ -183,7 +189,7 @@ function limitRoiBox(
 
 function roiBoxExceedsSourceObject(
   box: Box,
-  sourceObject: FigureObject,
+  sourceObject: FigureImageObject,
 ): boolean {
   return (
     box.x < sourceObject.x ||

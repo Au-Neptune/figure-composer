@@ -24,6 +24,7 @@ export function App({ platform }: AppProps): ReactElement {
         canUndo={controller.undoAvailable}
         canRedo={controller.redoAvailable}
         onToolChange={controller.handleToolChange}
+        onAddGenericAnnotation={controller.handleAddGenericAnnotation}
         onExportFigure={controller.handleOpenExportDialog}
       />
       <Workspace controller={controller} />
