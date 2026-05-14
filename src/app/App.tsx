@@ -1,11 +1,16 @@
 import type { ReactElement } from "react";
+import type { FigureComposerPlatform } from "../platform/appPlatform";
 import { AppToolbar } from "./AppToolbar";
 import { ExportDialog } from "./ExportDialog";
 import { useFigureComposerController } from "./useFigureComposerController";
 import { Workspace } from "./Workspace";
 
-export function App(): ReactElement {
-  const controller = useFigureComposerController();
+interface AppProps {
+  readonly platform: FigureComposerPlatform;
+}
+
+export function App({ platform }: AppProps): ReactElement {
+  const controller = useFigureComposerController(platform);
 
   return (
     <main className="app-shell">

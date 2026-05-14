@@ -1,6 +1,6 @@
 import type { ChangeEvent, Dispatch } from "react";
 import type { ProjectAction } from "../editor/state/projectStore";
-import { readImageFile } from "../platform/browser/fileAdapter";
+import type { SourceImageFileAdapter } from "../platform/appPlatform";
 import { runWithVisibleAsyncCommand } from "./visibleErrors";
 
 const SUPPORTED_IMAGE_TYPES = new Set(["image/png", "image/jpeg", "image/webp"]);
@@ -11,12 +11,13 @@ export type ImportFilesHandler = (files: readonly File[]) => Promise<void>;
 export function createImportFilesHandler(
   dispatch: Dispatch<ProjectAction>,
   setErrorMessage: (message: string | null) => void,
+  sourceImageFiles: SourceImageFileAdapter,
 ): ImportFilesHandler {
   return async (files) => {
     await runWithVisibleAsyncCommand(async () => {
       const imageFiles = validateImageFiles(files);
       for (const file of imageFiles) {
-        const imported = await readImageFile(file);
+        const imported = await sourceImageFiles.readImageFile(file);
         dispatch({ type: "sourceImageImported", imported });
       }
     }, setErrorMessage);

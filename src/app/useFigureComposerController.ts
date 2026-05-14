@@ -22,10 +22,7 @@ import {
   type HistoryState,
 } from "../editor/state/historyStore";
 import type { ProjectAction } from "../editor/state/projectStore";
-import {
-  openProjectFolder,
-  saveProjectFolder,
-} from "../platform/browser/projectFolderAdapter";
+import type { FigureComposerPlatform } from "../platform/appPlatform";
 import {
   createFileInputImportHandler,
   createImportFilesHandler,
@@ -89,13 +86,16 @@ interface ControllerHandlerOptions {
   readonly figure: Figure;
   readonly exportPreset: ExportPreset;
   readonly history: HistoryState;
+  readonly platform: FigureComposerPlatform;
   readonly dispatch: Dispatch<HistoryAction>;
   readonly setErrorMessage: (message: string | null) => void;
   readonly setExportDialogOpen: (open: boolean) => void;
   readonly stageRef: RefObject<Konva.Stage | null>;
 }
 
-export function useFigureComposerController(): FigureComposerController {
+export function useFigureComposerController(
+  platform: FigureComposerPlatform,
+): FigureComposerController {
   const [history, dispatch] = useReducer(
     historyReducer,
     undefined,
@@ -131,6 +131,7 @@ export function useFigureComposerController(): FigureComposerController {
       figure,
       exportPreset,
       history,
+      platform,
       dispatch,
       setErrorMessage,
       setExportDialogOpen,
@@ -143,18 +144,32 @@ function createControllerHandlers({
   figure,
   exportPreset,
   history,
+  platform,
   dispatch,
   setErrorMessage,
   setExportDialogOpen,
   stageRef,
 }: ControllerHandlerOptions): FigureComposerHandlers {
-  const importFiles = createImportFilesHandler(dispatch, setErrorMessage);
+  const importFiles = createImportFilesHandler(
+    dispatch,
+    setErrorMessage,
+    platform.sourceImageFiles,
+  );
   return {
     dispatchProjectAction: (action) => dispatch(action),
     handleImport: createFileInputImportHandler(importFiles),
     handleImportFiles: importFiles,
-    handleOpenProject: createOpenProjectHandler(dispatch, setErrorMessage, history),
-    handleSaveProject: () => runWithVisibleError(() => saveProjectFolder(figure), setErrorMessage),
+    handleOpenProject: createOpenProjectHandler(
+      dispatch,
+      setErrorMessage,
+      history,
+      platform,
+    ),
+    handleSaveProject: () =>
+      runWithVisibleError(
+        () => platform.projectFolders.saveProjectFolder(figure),
+        setErrorMessage,
+      ),
     handleUndo: () => dispatch({ type: "undoRequested" }),
     handleRedo: () => dispatch({ type: "redoRequested" }),
     handleToolChange: (tool) => dispatch({ type: "toolChanged", tool }),
@@ -241,9 +256,13 @@ function createOpenProjectHandler(
   dispatch: Dispatch<ProjectAction>,
   setErrorMessage: (message: string | null) => void,
   history: HistoryState,
+  platform: FigureComposerPlatform,
 ) {
   return async () => {
-    const openedFigure = await runWithVisibleError(openProjectFolder, setErrorMessage);
+    const openedFigure = await runWithVisibleError(
+      platform.projectFolders.openProjectFolder,
+      setErrorMessage,
+    );
     dispatch({ type: "projectOpened", figure: openedFigure });
     revokeHistoryAssetUrls(history);
   };
