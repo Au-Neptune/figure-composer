@@ -1,18 +1,27 @@
 import type { ExportPresetPatch } from "../model/exportPreset";
-import type { Figure, ToolMode } from "../model/figure";
+import type {
+  CanvasSettingsPatch,
+  Figure,
+  InsetDockSide,
+  ToolMode,
+} from "../model/figure";
 import type { Rect } from "../model/geometry";
 import type { ImportedSourceImage } from "../model/sourceImage";
 import {
-  addSourceImageToFigure,
-  createInitialFigure,
   createLinkedInsetFromStageRect,
+  dockInsetObject,
   moveFigureObject,
   resizeFigureObject,
   selectFigureObject,
   selectRoiFrame,
   setTool,
+  updateCanvasSettings,
   updateRoiFromStageRect,
 } from "./figureCommands";
+import {
+  addSourceImageToFigure,
+  createInitialFigure,
+} from "./figureFactory";
 import { updateExportPreset } from "./exportPresetCommands";
 
 export type ProjectAction =
@@ -35,6 +44,8 @@ export type ProjectAction =
       readonly bounds: Rect;
     }
   | { readonly type: "roiChanged"; readonly roiId: string; readonly stageRect: Rect }
+  | { readonly type: "canvasSettingsChanged"; readonly patch: CanvasSettingsPatch }
+  | { readonly type: "insetDocked"; readonly objectId: string; readonly side: InsetDockSide }
   | { readonly type: "figureObjectSelected"; readonly objectId: string | null }
   | { readonly type: "roiFrameSelected"; readonly roiId: string }
   | { readonly type: "toolChanged"; readonly tool: ToolMode }
@@ -69,6 +80,10 @@ export function projectReducer(figure: Figure, action: ProjectAction): Figure {
       return resizeFigureObject(figure, action.objectId, action.bounds);
     case "roiChanged":
       return updateRoiFromStageRect(figure, action.roiId, action.stageRect);
+    case "canvasSettingsChanged":
+      return updateCanvasSettings(figure, action.patch);
+    case "insetDocked":
+      return dockInsetObject(figure, action.objectId, action.side);
     case "figureObjectSelected":
       return selectFigureObject(figure, action.objectId);
     case "roiFrameSelected":

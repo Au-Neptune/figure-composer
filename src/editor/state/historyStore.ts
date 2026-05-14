@@ -101,6 +101,8 @@ function isUndoableProjectAction(action: ProjectAction): boolean {
     case "figureObjectMoved":
     case "figureObjectResized":
     case "roiChanged":
+    case "canvasSettingsChanged":
+    case "insetDocked":
     case "exportPresetChanged":
       return true;
     case "projectOpened":
@@ -110,4 +112,3 @@ function isUndoableProjectAction(action: ProjectAction): boolean {
       return false;
   }
 }
-

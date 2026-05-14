@@ -93,6 +93,13 @@ resizing Figure objects, changing a Region Of Interest, and editing the active
 Export Preset. Selection changes, tool changes, saving, exporting, and opening a
 Project are not tracked as undoable edits. Opening a Project resets history.
 
+Current editor layout behavior keeps Figure Layout separate from Export Presets.
+Figure canvas width, height, and background are edited as Figure Layout settings
+while export format, DPI raster scale, and JPG quality are confirmed at export
+time. Source Images and Insets are constrained to the Figure canvas; ROI Frames
+are constrained to their Source Image. Selected Insets can be docked to the top,
+right, bottom, or left side of their linked Source Image.
+
 ## MVP Image Operations
 
 MVP image operations are limited to:
@@ -119,10 +126,10 @@ Supported in MVP:
 - PNG.
 - JPG.
 
-Current browser implementation uses the active **Export Preset** for canvas
-width, canvas height, DPI raster scale, output format, background color, and JPG
-quality. DPI currently controls export pixel ratio; writing DPI metadata into
-the output file remains unresolved.
+Current browser implementation uses the current Figure Layout for exported
+canvas dimensions and background. The active **Export Preset** controls output
+format, DPI raster scale, and JPG quality. DPI currently controls export pixel
+ratio; writing DPI metadata into the output file remains unresolved.
 
 Deferred:
 

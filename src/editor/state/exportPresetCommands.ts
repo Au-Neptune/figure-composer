@@ -20,11 +20,6 @@ export function updateExportPreset(
   const nextPreset = validateExportPreset({ ...preset, ...options.patch });
   return {
     ...figure,
-    canvas: {
-      width: nextPreset.width,
-      height: nextPreset.height,
-      background: nextPreset.background,
-    },
     exportPresets: figure.exportPresets.map((item) =>
       item.id === options.presetId ? nextPreset : item,
     ),
@@ -60,4 +55,3 @@ function assertJpgQuality(value: number): void {
     );
   }
 }
-

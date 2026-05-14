@@ -6,7 +6,8 @@ import { Image, Rect, Transformer } from "react-konva";
 import { MIN_OBJECT_SIDE_PX } from "../state/editorDefaults";
 import { useImageAsset } from "../image/loadImageAsset";
 import type { Figure, FigureObject } from "../model/figure";
-import type { Rect as ModelRect } from "../model/geometry";
+import type { Point, Rect as ModelRect, Size } from "../model/geometry";
+import { constrainRectPosition } from "../model/geometry";
 import { getRoi, getSourceImage } from "../model/selectors";
 import type { ProjectAction } from "../state/projectStore";
 import { useKonvaTransformer } from "./useKonvaTransformer";
@@ -78,13 +79,19 @@ function LoadedFigureObject({
         width={object.width}
         height={object.height}
         draggable={figure.tool === "select"}
+        dragBoundFunc={(position) => constrainDragPosition(position, object, figure.canvas)}
         onMouseDown={handleSelect}
         onTouchStart={handleSelect}
         onDragEnd={handleDragEnd}
         onTransformEnd={handleTransformEnd}
       />
       {selected ? (
-        <Transformer ref={transformerRef} boundBoxFunc={limitObjectBox} />
+        <Transformer
+          ref={transformerRef}
+          boundBoxFunc={(oldBox, newBox) =>
+            limitObjectBox(oldBox, newBox, figure.canvas)
+          }
+        />
       ) : null}
     </>
   );
@@ -150,6 +157,15 @@ function dispatchResize(
   dispatch({ type: "figureObjectResized", objectId, bounds });
 }
 
+function constrainDragPosition(
+  position: Point,
+  object: FigureObject,
+  bounds: Size,
+): Point {
+  const rect = constrainRectPosition({ ...object, ...position }, bounds);
+  return { x: rect.x, y: rect.y };
+}
+
 interface SelectFigureObjectOptions {
   readonly figure: Figure;
   readonly objectId: string;
@@ -173,9 +189,22 @@ function selectFigureObject({
 function limitObjectBox(
   oldBox: Box,
   newBox: Box,
+  bounds: Size,
 ): Box {
   if (newBox.width < MIN_OBJECT_SIDE_PX || newBox.height < MIN_OBJECT_SIDE_PX) {
     return oldBox;
   }
+  if (boxExceedsBounds(newBox, bounds)) {
+    return oldBox;
+  }
   return newBox;
+}
+
+function boxExceedsBounds(box: Box, bounds: Size): boolean {
+  return (
+    box.x < 0 ||
+    box.y < 0 ||
+    box.x + box.width > bounds.width ||
+    box.y + box.height > bounds.height
+  );
 }

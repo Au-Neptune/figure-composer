@@ -3,12 +3,15 @@ import type { RegionOfInterest } from "./roi";
 import type { SourceImage } from "./sourceImage";
 
 export type ToolMode = "select" | "roi";
+export type InsetDockSide = "top" | "right" | "bottom" | "left";
 
 export interface CanvasSettings {
   readonly width: number;
   readonly height: number;
   readonly background: string;
 }
+
+export type CanvasSettingsPatch = Partial<CanvasSettings>;
 
 export interface FigureObjectBase {
   readonly id: string;
@@ -42,4 +45,3 @@ export interface Figure {
   readonly selectedRoiId: string | null;
   readonly tool: ToolMode;
 }
-

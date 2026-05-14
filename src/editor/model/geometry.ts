@@ -49,3 +49,32 @@ export function clampRectToSize(rect: Rect, size: Size): Rect {
   };
 }
 
+export function constrainRectWithinBounds(rect: Rect, bounds: Size): Rect {
+  const width = clamp(rect.width, 0, bounds.width);
+  const height = clamp(rect.height, 0, bounds.height);
+  return {
+    x: clamp(rect.x, 0, bounds.width - width),
+    y: clamp(rect.y, 0, bounds.height - height),
+    width,
+    height,
+  };
+}
+
+export function constrainRectPosition(rect: Rect, bounds: Size): Rect {
+  return {
+    ...rect,
+    x: clamp(rect.x, 0, bounds.width - rect.width),
+    y: clamp(rect.y, 0, bounds.height - rect.height),
+  };
+}
+
+export function constrainRectWithinRect(rect: Rect, bounds: Rect): Rect {
+  const width = clamp(rect.width, 0, bounds.width);
+  const height = clamp(rect.height, 0, bounds.height);
+  return {
+    x: clamp(rect.x, bounds.x, bounds.x + bounds.width - width),
+    y: clamp(rect.y, bounds.y, bounds.y + bounds.height - height),
+    width,
+    height,
+  };
+}

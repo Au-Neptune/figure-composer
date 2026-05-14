@@ -1,6 +1,7 @@
 import type { ReactElement } from "react";
 import { FigureStage } from "../editor/canvas/FigureStage";
 import { AppToolbar } from "./AppToolbar";
+import { ExportDialog } from "./ExportDialog";
 import { Inspector } from "./Inspector";
 import { useFigureComposerController } from "./useFigureComposerController";
 
@@ -19,15 +20,15 @@ export function App(): ReactElement {
         canUndo={controller.undoAvailable}
         canRedo={controller.redoAvailable}
         onToolChange={controller.handleToolChange}
-        onExportFigure={controller.handleExportFigure}
+        onExportFigure={controller.handleOpenExportDialog}
         exportLabel={controller.exportPreset.format.toUpperCase()}
       />
       <section className="workspace">
         <Inspector
           figure={controller.figure}
-          exportPreset={controller.exportPreset}
           errorMessage={controller.errorMessage}
-          onExportPresetChange={controller.handleExportPresetChange}
+          onCanvasSettingsChange={controller.handleCanvasSettingsChange}
+          onDockInset={controller.handleDockInset}
         />
         <div className="stage-viewport">
           <FigureStage
@@ -37,6 +38,15 @@ export function App(): ReactElement {
           />
         </div>
       </section>
+      {controller.exportDialogOpen ? (
+        <ExportDialog
+          figure={controller.figure}
+          preset={controller.exportPreset}
+          onChange={controller.handleExportPresetChange}
+          onCancel={controller.handleCloseExportDialog}
+          onConfirm={controller.handleConfirmExportFigure}
+        />
+      ) : null}
     </main>
   );
 }

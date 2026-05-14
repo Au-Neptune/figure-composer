@@ -3,7 +3,12 @@ import type { ChangeEvent, Dispatch, RefObject } from "react";
 import type Konva from "konva";
 import { exportStageAsFigure } from "../editor/export/exportFigure";
 import type { ExportPreset, ExportPresetPatch } from "../editor/model/exportPreset";
-import type { Figure, ToolMode } from "../editor/model/figure";
+import type {
+  CanvasSettingsPatch,
+  Figure,
+  InsetDockSide,
+  ToolMode,
+} from "../editor/model/figure";
 import { revokeHistoryAssetUrls } from "../editor/project/assetUrls";
 import {
   canRedo,
@@ -27,6 +32,7 @@ export interface FigureComposerController {
   readonly stageRef: RefObject<Konva.Stage | null>;
   readonly undoAvailable: boolean;
   readonly redoAvailable: boolean;
+  readonly exportDialogOpen: boolean;
   readonly dispatchProjectAction: (action: ProjectAction) => void;
   readonly handleImport: (event: ChangeEvent<HTMLInputElement>) => Promise<void>;
   readonly handleOpenProject: () => Promise<void>;
@@ -34,7 +40,11 @@ export interface FigureComposerController {
   readonly handleUndo: () => void;
   readonly handleRedo: () => void;
   readonly handleToolChange: (tool: ToolMode) => void;
-  readonly handleExportFigure: () => void;
+  readonly handleOpenExportDialog: () => void;
+  readonly handleCloseExportDialog: () => void;
+  readonly handleConfirmExportFigure: () => void;
+  readonly handleCanvasSettingsChange: (patch: CanvasSettingsPatch) => void;
+  readonly handleDockInset: (objectId: string, side: InsetDockSide) => void;
   readonly handleExportPresetChange: (patch: ExportPresetPatch) => void;
 }
 
@@ -45,6 +55,7 @@ export function useFigureComposerController(): FigureComposerController {
     createInitialHistory,
   );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const stageRef = useRef<Konva.Stage>(null);
   const figure = history.present;
   const exportPreset = getPrimaryExportPreset(figure.exportPresets);
@@ -67,6 +78,7 @@ export function useFigureComposerController(): FigureComposerController {
     stageRef,
     undoAvailable,
     redoAvailable,
+    exportDialogOpen,
     dispatchProjectAction: (action) => dispatch(action),
     handleImport: createImportHandler(dispatch, setErrorMessage),
     handleOpenProject: createOpenProjectHandler(dispatch, setErrorMessage, history),
@@ -74,7 +86,16 @@ export function useFigureComposerController(): FigureComposerController {
     handleUndo,
     handleRedo,
     handleToolChange: (tool) => dispatch({ type: "toolChanged", tool }),
-    handleExportFigure: () => exportFigure(stageRef.current, exportPreset),
+    handleOpenExportDialog: () => setExportDialogOpen(true),
+    handleCloseExportDialog: () => setExportDialogOpen(false),
+    handleConfirmExportFigure: () => {
+      exportFigure(stageRef.current, exportPreset);
+      setExportDialogOpen(false);
+    },
+    handleCanvasSettingsChange: (patch) =>
+      dispatch({ type: "canvasSettingsChanged", patch }),
+    handleDockInset: (objectId, side) =>
+      dispatch({ type: "insetDocked", objectId, side }),
     handleExportPresetChange: (patch) =>
       dispatch({ type: "exportPresetChanged", presetId: exportPreset.id, patch }),
   };

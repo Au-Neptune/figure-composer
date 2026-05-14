@@ -7,12 +7,11 @@ import type {
 import {
   JPG_QUALITY_STEP,
   MAX_JPG_QUALITY,
-  MIN_EXPORT_DIMENSION,
   MIN_EXPORT_DPI,
   MIN_JPG_QUALITY,
 } from "../editor/state/editorDefaults";
 
-type NumericPresetField = "width" | "height" | "dpi" | "jpgQuality";
+type NumericPresetField = "dpi" | "jpgQuality";
 
 interface ExportPresetEditorProps {
   readonly preset: ExportPreset;
@@ -25,18 +24,8 @@ export function ExportPresetEditor({
 }: ExportPresetEditorProps): ReactElement {
   return (
     <div className="preset-editor">
-      <NumberField label="Width" field="width" preset={preset} onChange={onChange} />
-      <NumberField label="Height" field="height" preset={preset} onChange={onChange} />
       <NumberField label="DPI" field="dpi" preset={preset} onChange={onChange} />
       <FormatField value={preset.format} onChange={onChange} />
-      <label className="field-row">
-        <span>Background</span>
-        <input
-          type="color"
-          value={preset.background}
-          onChange={(event) => onChange({ background: event.currentTarget.value })}
-        />
-      </label>
       <JpgQualityField preset={preset} onChange={onChange} />
     </div>
   );
@@ -53,13 +42,12 @@ function NumberField({
   readonly preset: ExportPreset;
   readonly onChange: (patch: ExportPresetPatch) => void;
 }): ReactElement {
-  const min = field === "dpi" ? MIN_EXPORT_DPI : MIN_EXPORT_DIMENSION;
   return (
     <label className="field-row">
       <span>{label}</span>
       <input
         type="number"
-        min={min}
+        min={MIN_EXPORT_DPI}
         step={1}
         value={preset[field]}
         onChange={(event) => updateNumberField(field, event, onChange)}
@@ -121,4 +109,3 @@ function updateNumberField(
   }
   onChange({ [field]: Number(event.currentTarget.value) });
 }
-

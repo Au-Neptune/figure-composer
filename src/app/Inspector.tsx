@@ -1,20 +1,24 @@
 import type { ReactElement } from "react";
-import type { ExportPreset, ExportPresetPatch } from "../editor/model/exportPreset";
-import type { Figure } from "../editor/model/figure";
-import { ExportPresetEditor } from "./ExportPresetEditor";
+import type {
+  CanvasSettingsPatch,
+  Figure,
+  InsetDockSide,
+} from "../editor/model/figure";
+import { FigureLayoutEditor } from "./FigureLayoutEditor";
+import { InsetDockControls } from "./InsetDockControls";
 
 interface InspectorProps {
   readonly figure: Figure;
-  readonly exportPreset: ExportPreset;
   readonly errorMessage: string | null;
-  readonly onExportPresetChange: (patch: ExportPresetPatch) => void;
+  readonly onCanvasSettingsChange: (patch: CanvasSettingsPatch) => void;
+  readonly onDockInset: (objectId: string, side: InsetDockSide) => void;
 }
 
 export function Inspector({
   figure,
-  exportPreset,
   errorMessage,
-  onExportPresetChange,
+  onCanvasSettingsChange,
+  onDockInset,
 }: InspectorProps): ReactElement {
   const insetCount = figure.objects.filter((object) => object.kind === "inset").length;
   return (
@@ -23,12 +27,13 @@ export function Inspector({
       <InspectorMetric label="ROIs" value={figure.rois.length} />
       <InspectorMetric label="Insets" value={insetCount} />
       <div className="inspector-section">
-        <h2>Export Preset</h2>
-        <ExportPresetEditor
-          preset={exportPreset}
-          onChange={onExportPresetChange}
+        <h2>Figure Layout</h2>
+        <FigureLayoutEditor
+          canvas={figure.canvas}
+          onChange={onCanvasSettingsChange}
         />
       </div>
+      <InsetDockControls figure={figure} onDockInset={onDockInset} />
       {errorMessage ? <p className="error-message">{errorMessage}</p> : null}
     </aside>
   );

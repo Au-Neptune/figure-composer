@@ -1,16 +1,21 @@
-import type { ExportPreset } from "../model/exportPreset";
 import type {
+  CanvasSettingsPatch,
   Figure,
   FigureObject,
   InsetObject,
+  InsetDockSide,
   SourceImageObject,
   ToolMode,
 } from "../model/figure";
 import type { Rect, Size } from "../model/geometry";
-import { fitWithin, hasRenderableArea } from "../model/geometry";
+import {
+  constrainRectPosition,
+  constrainRectWithinBounds,
+  constrainRectWithinRect,
+  hasRenderableArea,
+} from "../model/geometry";
 import type { RegionOfInterest } from "../model/roi";
-import type { ImportedSourceImage, SourceImage } from "../model/sourceImage";
-import { createAssetFileName } from "../project/assetNames";
+import type { SourceImage } from "../model/sourceImage";
 import {
   getFigureObject,
   getRoi,
@@ -19,65 +24,12 @@ import {
   mapStageRectToSourceRect,
 } from "../model/selectors";
 import {
-  DEFAULT_CANVAS_BACKGROUND,
-  DEFAULT_CANVAS_HEIGHT,
-  DEFAULT_CANVAS_WIDTH,
-  DEFAULT_DPI,
   DEFAULT_INSET_GAP,
   DEFAULT_INSET_WIDTH,
-  DEFAULT_JPG_QUALITY,
-  IMPORT_IMAGE_MAX_HEIGHT,
-  IMPORT_IMAGE_MAX_WIDTH,
-  IMPORT_IMAGE_OFFSET,
-  IMPORT_IMAGE_START_X,
-  IMPORT_IMAGE_START_Y,
   ROI_FRAME_STROKE,
   ROI_FRAME_STROKE_WIDTH,
 } from "./editorDefaults";
-
-export function createInitialFigure(): Figure {
-  const preset = createDefaultExportPreset();
-  return {
-    id: createId("figure"),
-    canvas: {
-      width: DEFAULT_CANVAS_WIDTH,
-      height: DEFAULT_CANVAS_HEIGHT,
-      background: DEFAULT_CANVAS_BACKGROUND,
-    },
-    sourceImages: [],
-    objects: [],
-    rois: [],
-    exportPresets: [preset],
-    selectedObjectId: null,
-    selectedRoiId: null,
-    tool: "select",
-  };
-}
-
-export function addSourceImageToFigure(
-  figure: Figure,
-  imported: ImportedSourceImage,
-): Figure {
-  const id = createId("source");
-  const sourceImage: SourceImage = {
-    id,
-    name: imported.name,
-    assetUrl: imported.assetUrl,
-    assetFileName: createAssetFileName(id, imported.name),
-    width: imported.width,
-    height: imported.height,
-    referencedBy: [],
-  };
-  const object = createSourceImageObject(sourceImage, figure.objects.length);
-  return {
-    ...figure,
-    sourceImages: [...figure.sourceImages, sourceImage],
-    objects: [...figure.objects, object],
-    selectedObjectId: object.id,
-    selectedRoiId: null,
-    tool: "select",
-  };
-}
+import { createId } from "./idFactory";
 
 export function createLinkedInsetFromStageRect(
   figure: Figure,
@@ -114,11 +66,12 @@ export function moveFigureObject(
   objectId: string,
   nextPosition: { readonly x: number; readonly y: number },
 ): Figure {
-  getFigureObject(figure, objectId);
+  const object = getFigureObject(figure, objectId);
+  const nextBounds = constrainRectPosition({ ...object, ...nextPosition }, figure.canvas);
   return {
     ...figure,
     objects: figure.objects.map((object) =>
-      object.id === objectId ? { ...object, ...nextPosition } : object,
+      object.id === objectId ? { ...object, ...nextBounds } : object,
     ),
   };
 }
@@ -130,10 +83,12 @@ export function resizeFigureObject(
 ): Figure {
   assertRenderableRect(nextBounds, "Figure object");
   getFigureObject(figure, objectId);
+  const constrainedBounds = constrainRectWithinBounds(nextBounds, figure.canvas);
+  assertRenderableRect(constrainedBounds, "Figure object");
   return {
     ...figure,
     objects: figure.objects.map((object) =>
-      object.id === objectId ? { ...object, ...nextBounds } : object,
+      object.id === objectId ? { ...object, ...constrainedBounds } : object,
     ),
   };
 }
@@ -146,13 +101,52 @@ export function updateRoiFromStageRect(
   const roi = getRoi(figure, roiId);
   const sourceObject = getSourceImageObject(figure, roi.sourceObjectId);
   const sourceImage = getSourceImage(figure, roi.sourceImageId);
-  const sourceRect = mapStageRectToSourceRect(stageRect, sourceObject, sourceImage);
+  const constrainedStageRect = constrainRectWithinRect(stageRect, sourceObject);
+  const sourceRect = mapStageRectToSourceRect(
+    constrainedStageRect,
+    sourceObject,
+    sourceImage,
+  );
   assertRenderableRect(sourceRect, "Region Of Interest");
   return {
     ...figure,
     rois: figure.rois.map((item) =>
       item.id === roiId ? { ...item, rect: sourceRect } : item,
     ),
+  };
+}
+
+export function updateCanvasSettings(
+  figure: Figure,
+  patch: CanvasSettingsPatch,
+): Figure {
+  const canvas = validateCanvasSettings({ ...figure.canvas, ...patch });
+  return {
+    ...figure,
+    canvas,
+    objects: figure.objects.map((object) => constrainObjectToCanvas(object, canvas)),
+  };
+}
+
+export function dockInsetObject(
+  figure: Figure,
+  objectId: string,
+  side: InsetDockSide,
+): Figure {
+  const inset = getInsetObject(figure, objectId);
+  const roi = getRoi(figure, inset.roiId);
+  const sourceObject = getSourceImageObject(figure, roi.sourceObjectId);
+  const bounds = constrainRectPosition(
+    createDockedInsetBounds(inset, sourceObject, side),
+    figure.canvas,
+  );
+  return {
+    ...figure,
+    objects: figure.objects.map((object) =>
+      object.id === objectId ? { ...object, ...bounds } : object,
+    ),
+    selectedObjectId: objectId,
+    selectedRoiId: null,
   };
 }
 
@@ -178,38 +172,6 @@ export function selectRoiFrame(figure: Figure, roiId: string): Figure {
 
 export function setTool(figure: Figure, tool: ToolMode): Figure {
   return { ...figure, tool };
-}
-
-function createDefaultExportPreset(): ExportPreset {
-  return {
-    id: createId("preset"),
-    name: "PNG 300 DPI",
-    width: DEFAULT_CANVAS_WIDTH,
-    height: DEFAULT_CANVAS_HEIGHT,
-    dpi: DEFAULT_DPI,
-    format: "png",
-    background: DEFAULT_CANVAS_BACKGROUND,
-    jpgQuality: DEFAULT_JPG_QUALITY,
-  };
-}
-
-function createSourceImageObject(
-  sourceImage: SourceImage,
-  index: number,
-): SourceImageObject {
-  const fitted = fitWithin(sourceImage, {
-    width: IMPORT_IMAGE_MAX_WIDTH,
-    height: IMPORT_IMAGE_MAX_HEIGHT,
-  });
-  return {
-    id: createId("object"),
-    kind: "sourceImage",
-    sourceImageId: sourceImage.id,
-    x: IMPORT_IMAGE_START_X + index * IMPORT_IMAGE_OFFSET,
-    y: IMPORT_IMAGE_START_Y + index * IMPORT_IMAGE_OFFSET,
-    width: fitted.width,
-    height: fitted.height,
-  };
 }
 
 function createRoi(
@@ -244,19 +206,18 @@ function createInsetObject({
   roi,
 }: CreateInsetObjectOptions): InsetObject {
   const size = createInsetSize(roi.rect);
-  const x = sourceObject.x + sourceObject.width + DEFAULT_INSET_GAP;
-  const y = sourceObject.y;
-  const nextY = sourceObject.y + sourceObject.height + DEFAULT_INSET_GAP;
-  return {
+  const inset: InsetObject = {
     id: createId("object"),
     kind: "inset",
     sourceImageId,
     roiId: roi.id,
-    x: x + size.width <= figure.canvas.width ? x : sourceObject.x,
-    y: x + size.width <= figure.canvas.width ? y : nextY,
+    x: 0,
+    y: 0,
     width: size.width,
     height: size.height,
   };
+  const dockedBounds = createDockedInsetBounds(inset, sourceObject, "right");
+  return constrainObjectToCanvas({ ...inset, ...dockedBounds }, figure.canvas);
 }
 
 function createInsetSize(roiRect: Size): Size {
@@ -285,9 +246,57 @@ function assertRenderableRect(rect: Size, label: string): void {
   }
 }
 
-function createId(prefix: string): string {
-  if (!globalThis.crypto?.randomUUID) {
-    throw new Error("crypto.randomUUID is required to create Figure model ids.");
+function validateCanvasSettings(canvas: Figure["canvas"]): Figure["canvas"] {
+  assertRenderableRect(canvas, "Figure Layout");
+  return canvas;
+}
+
+function constrainObjectToCanvas<TObject extends FigureObject>(
+  object: TObject,
+  canvas: Size,
+): TObject {
+  return { ...object, ...constrainRectWithinBounds(object, canvas) };
+}
+
+function getInsetObject(figure: Figure, objectId: string): InsetObject {
+  const object = getFigureObject(figure, objectId);
+  if (object.kind !== "inset") {
+    throw new Error(`Figure object is not an Inset: ${objectId}`);
   }
-  return `${prefix}_${globalThis.crypto.randomUUID()}`;
+  return object;
+}
+
+function createDockedInsetBounds(
+  inset: InsetObject,
+  sourceObject: SourceImageObject,
+  side: InsetDockSide,
+): Rect {
+  const centeredX = sourceObject.x + (sourceObject.width - inset.width) / 2;
+  const centeredY = sourceObject.y + (sourceObject.height - inset.height) / 2;
+  switch (side) {
+    case "top":
+      return {
+        ...inset,
+        x: centeredX,
+        y: sourceObject.y - inset.height - DEFAULT_INSET_GAP,
+      };
+    case "right":
+      return {
+        ...inset,
+        x: sourceObject.x + sourceObject.width + DEFAULT_INSET_GAP,
+        y: centeredY,
+      };
+    case "bottom":
+      return {
+        ...inset,
+        x: centeredX,
+        y: sourceObject.y + sourceObject.height + DEFAULT_INSET_GAP,
+      };
+    case "left":
+      return {
+        ...inset,
+        x: sourceObject.x - inset.width - DEFAULT_INSET_GAP,
+        y: centeredY,
+      };
+  }
 }
