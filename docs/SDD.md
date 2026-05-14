@@ -98,7 +98,9 @@ Figure canvas width, height, and background are edited as Figure Layout settings
 while export format, DPI raster scale, and JPG quality are confirmed at export
 time. Source Images and Insets are constrained to the Figure canvas; ROI Frames
 are constrained to their Source Image. Selected Insets can be docked to the top,
-right, bottom, or left side of their linked Source Image.
+right, bottom, or left side of their linked Source Image. The Inspector lists
+all Source Images so users can reselect the original image object directly when
+working with multiple canvas objects.
 
 ## MVP Image Operations
 

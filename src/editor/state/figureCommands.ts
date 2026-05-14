@@ -24,12 +24,12 @@ import {
   mapStageRectToSourceRect,
 } from "../model/selectors";
 import {
-  DEFAULT_INSET_GAP,
   DEFAULT_INSET_WIDTH,
   ROI_FRAME_STROKE,
   ROI_FRAME_STROKE_WIDTH,
 } from "./editorDefaults";
 import { createId } from "./idFactory";
+import { createDockedInsetBounds, getInsetObject } from "./insetDocking";
 
 export function createLinkedInsetFromStageRect(
   figure: Figure,
@@ -256,47 +256,4 @@ function constrainObjectToCanvas<TObject extends FigureObject>(
   canvas: Size,
 ): TObject {
   return { ...object, ...constrainRectWithinBounds(object, canvas) };
-}
-
-function getInsetObject(figure: Figure, objectId: string): InsetObject {
-  const object = getFigureObject(figure, objectId);
-  if (object.kind !== "inset") {
-    throw new Error(`Figure object is not an Inset: ${objectId}`);
-  }
-  return object;
-}
-
-function createDockedInsetBounds(
-  inset: InsetObject,
-  sourceObject: SourceImageObject,
-  side: InsetDockSide,
-): Rect {
-  const centeredX = sourceObject.x + (sourceObject.width - inset.width) / 2;
-  const centeredY = sourceObject.y + (sourceObject.height - inset.height) / 2;
-  switch (side) {
-    case "top":
-      return {
-        ...inset,
-        x: centeredX,
-        y: sourceObject.y - inset.height - DEFAULT_INSET_GAP,
-      };
-    case "right":
-      return {
-        ...inset,
-        x: sourceObject.x + sourceObject.width + DEFAULT_INSET_GAP,
-        y: centeredY,
-      };
-    case "bottom":
-      return {
-        ...inset,
-        x: centeredX,
-        y: sourceObject.y + sourceObject.height + DEFAULT_INSET_GAP,
-      };
-    case "left":
-      return {
-        ...inset,
-        x: sourceObject.x - inset.width - DEFAULT_INSET_GAP,
-        y: centeredY,
-      };
-  }
 }

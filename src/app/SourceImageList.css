@@ -1,0 +1,66 @@
+.source-image-list {
+  display: grid;
+  gap: 8px;
+}
+
+.source-image-button {
+  display: grid;
+  width: 100%;
+  grid-template-columns: 28px minmax(0, 1fr);
+  align-items: start;
+  gap: 8px;
+  border: 1px solid #b9c4b2;
+  border-radius: 7px;
+  background: #ffffff;
+  color: #263126;
+  cursor: pointer;
+  padding: 8px;
+  text-align: left;
+}
+
+.source-image-button:hover,
+.source-image-button.is-selected {
+  border-color: #28766f;
+}
+
+.source-image-button.is-selected {
+  background: #dceee8;
+}
+
+.source-image-icon {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border-radius: 6px;
+  background: #e8ece5;
+  color: #28766f;
+}
+
+.source-image-body {
+  min-width: 0;
+}
+
+.source-image-name,
+.source-image-meta {
+  display: block;
+}
+
+.source-image-name {
+  overflow: hidden;
+  color: #1f261f;
+  font-size: 13px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.source-image-meta,
+.source-image-empty {
+  color: #526051;
+  font-size: 12px;
+}
+
+.source-image-empty {
+  margin: 0;
+}

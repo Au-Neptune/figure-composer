@@ -45,6 +45,7 @@ export interface FigureComposerController {
   readonly handleConfirmExportFigure: () => void;
   readonly handleCanvasSettingsChange: (patch: CanvasSettingsPatch) => void;
   readonly handleDockInset: (objectId: string, side: InsetDockSide) => void;
+  readonly handleSelectFigureObject: (objectId: string) => void;
   readonly handleExportPresetChange: (patch: ExportPresetPatch) => void;
 }
 
@@ -96,6 +97,8 @@ export function useFigureComposerController(): FigureComposerController {
       dispatch({ type: "canvasSettingsChanged", patch }),
     handleDockInset: (objectId, side) =>
       dispatch({ type: "insetDocked", objectId, side }),
+    handleSelectFigureObject: (objectId) =>
+      dispatch({ type: "figureObjectSelected", objectId }),
     handleExportPresetChange: (patch) =>
       dispatch({ type: "exportPresetChanged", presetId: exportPreset.id, patch }),
   };

@@ -6,12 +6,14 @@ import type {
 } from "../editor/model/figure";
 import { FigureLayoutEditor } from "./FigureLayoutEditor";
 import { InsetDockControls } from "./InsetDockControls";
+import { SourceImageList } from "./SourceImageList";
 
 interface InspectorProps {
   readonly figure: Figure;
   readonly errorMessage: string | null;
   readonly onCanvasSettingsChange: (patch: CanvasSettingsPatch) => void;
   readonly onDockInset: (objectId: string, side: InsetDockSide) => void;
+  readonly onSelectFigureObject: (objectId: string) => void;
 }
 
 export function Inspector({
@@ -19,6 +21,7 @@ export function Inspector({
   errorMessage,
   onCanvasSettingsChange,
   onDockInset,
+  onSelectFigureObject,
 }: InspectorProps): ReactElement {
   const insetCount = figure.objects.filter((object) => object.kind === "inset").length;
   return (
@@ -26,6 +29,10 @@ export function Inspector({
       <InspectorMetric label="Source Images" value={figure.sourceImages.length} />
       <InspectorMetric label="ROIs" value={figure.rois.length} />
       <InspectorMetric label="Insets" value={insetCount} />
+      <SourceImageList
+        figure={figure}
+        onSelectFigureObject={onSelectFigureObject}
+      />
       <div className="inspector-section">
         <h2>Figure Layout</h2>
         <FigureLayoutEditor

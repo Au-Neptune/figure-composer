@@ -1,0 +1,80 @@
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(31, 38, 31, 0.28);
+  padding: 20px;
+}
+
+.export-dialog {
+  width: min(420px, 100%);
+  border: 1px solid #b9c4b2;
+  border-radius: 8px;
+  background: #f8faf7;
+  box-shadow: 0 18px 48px rgba(31, 38, 31, 0.24);
+}
+
+.dialog-header,
+.dialog-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+}
+
+.dialog-header {
+  border-bottom: 1px solid #d7ded2;
+}
+
+.dialog-header h2 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.dialog-body {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+}
+
+.dialog-actions {
+  border-top: 1px solid #d7ded2;
+}
+
+.icon-button {
+  width: 30px;
+  height: 30px;
+  border: 1px solid #b9c4b2;
+  border-radius: 6px;
+  background: #ffffff;
+  cursor: pointer;
+}
+
+.primary-button {
+  min-height: 34px;
+  border: 1px solid #28766f;
+  border-radius: 6px;
+  background: #28766f;
+  color: #ffffff;
+  cursor: pointer;
+  padding: 0 14px;
+}
+
+.export-summary {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr);
+  gap: 8px 12px;
+  margin: 0;
+  font-size: 13px;
+}
+
+.export-summary dt {
+  color: #526051;
+}
+
+.export-summary dd {
+  margin: 0;
+  color: #1f261f;
+}

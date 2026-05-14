@@ -29,6 +29,7 @@ export function App(): ReactElement {
           errorMessage={controller.errorMessage}
           onCanvasSettingsChange={controller.handleCanvasSettingsChange}
           onDockInset={controller.handleDockInset}
+          onSelectFigureObject={controller.handleSelectFigureObject}
         />
         <div className="stage-viewport">
           <FigureStage

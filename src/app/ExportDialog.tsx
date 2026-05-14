@@ -1,6 +1,7 @@
 import type { ReactElement } from "react";
 import type { ExportPreset, ExportPresetPatch } from "../editor/model/exportPreset";
 import type { Figure } from "../editor/model/figure";
+import "./ExportDialog.css";
 import { ExportPresetEditor } from "./ExportPresetEditor";
 
 interface ExportDialogProps {
@@ -50,4 +51,3 @@ export function ExportDialog({
     </div>
   );
 }
-
