@@ -1,0 +1,5 @@
+id,task,status,acceptance_criteria,validation_command,completed_at,retry_count,notes
+1,Implement resizable side panels,DONE,"Left and right panel widths respond to drag handles","npm.cmd run typecheck",2026-05-14T19:28:00+08:00,0,
+2,Implement page image drag-drop import,DONE,"Dropping image files imports them as Source Images","npm.cmd run typecheck",2026-05-14T19:31:00+08:00,0,
+3,Synchronize export size with canvas,DONE,"Export preset dimensions automatically match Figure Layout canvas dimensions","npm.cmd run test -- --run src/editor/export/exportPresetSync.test.ts src/editor/export/exportPreview.test.ts src/editor/state/mvpSmoke.test.ts",2026-05-14T19:34:00+08:00,0,
+4,Run final validation and push,DONE,"Tests/typecheck/build pass and commit is pushed to origin/master","npm.cmd run test; npm.cmd run typecheck; npm.cmd run build",2026-05-14T19:38:00+08:00,0,

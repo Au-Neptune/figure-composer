@@ -1,0 +1,63 @@
+.workspace {
+  position: relative;
+  display: grid;
+  flex: 1;
+  min-height: 0;
+}
+
+.workspace.is-drop-active::after {
+  position: absolute;
+  z-index: 4;
+  inset: 12px;
+  border: 2px dashed #28766f;
+  border-radius: 8px;
+  background: rgba(40, 118, 111, 0.08);
+  content: "";
+  pointer-events: none;
+}
+
+.workspace-splitter {
+  width: 8px;
+  min-width: 8px;
+  border: 0;
+  background: #d7ded2;
+  cursor: col-resize;
+  padding: 0;
+}
+
+.workspace-splitter:hover,
+.workspace-splitter:focus-visible {
+  background: #28766f;
+  outline: none;
+}
+
+.stage-viewport {
+  overflow: auto;
+  background:
+    linear-gradient(45deg, #dfe5dc 25%, transparent 25%),
+    linear-gradient(-45deg, #dfe5dc 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #dfe5dc 75%),
+    linear-gradient(-45deg, transparent 75%, #dfe5dc 75%);
+  background-color: #eef1eb;
+  background-position:
+    0 0,
+    0 10px,
+    10px -10px,
+    -10px 0;
+  background-size: 20px 20px;
+  padding: 28px;
+}
+
+.konvajs-content {
+  box-shadow: 0 12px 30px rgba(31, 38, 31, 0.18);
+}
+
+@media (max-width: 760px) {
+  .workspace {
+    grid-template-columns: 1fr !important;
+  }
+
+  .workspace-splitter {
+    display: none;
+  }
+}

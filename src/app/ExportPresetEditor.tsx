@@ -6,14 +6,13 @@ import type {
 } from "../editor/model/exportPreset";
 import {
   JPG_QUALITY_STEP,
-  MIN_EXPORT_DIMENSION,
   MAX_JPG_QUALITY,
   MIN_EXPORT_DPI,
   MIN_JPG_QUALITY,
 } from "../editor/state/editorDefaults";
 
 const PERCENT_SCALE = 100;
-type NumberPresetField = "width" | "height" | "dpi";
+type NumberPresetField = "dpi";
 type NumericPresetField = NumberPresetField | "jpgQuality";
 
 interface ExportPresetEditorProps {
@@ -27,18 +26,6 @@ export function ExportPresetEditor({
 }: ExportPresetEditorProps): ReactElement {
   return (
     <div className="preset-editor">
-      <NumberField
-        label="Output Width"
-        field="width"
-        preset={preset}
-        onChange={onChange}
-      />
-      <NumberField
-        label="Output Height"
-        field="height"
-        preset={preset}
-        onChange={onChange}
-      />
       <NumberField label="DPI" field="dpi" preset={preset} onChange={onChange} />
       <FormatField value={preset.format} onChange={onChange} />
       {preset.format === "jpg" ? (
@@ -64,7 +51,7 @@ function NumberField({
       <span>{label}</span>
       <input
         type="number"
-        min={getNumberFieldMinimum(field)}
+        min={MIN_EXPORT_DPI}
         step={1}
         value={preset[field]}
         onChange={(event) => updateNumberField(field, event, onChange)}
@@ -128,10 +115,6 @@ function updateNumberField(
     return;
   }
   onChange({ [field]: Number(event.currentTarget.value) });
-}
-
-function getNumberFieldMinimum(field: NumberPresetField): number {
-  return field === "dpi" ? MIN_EXPORT_DPI : MIN_EXPORT_DIMENSION;
 }
 
 function formatJpgQuality(value: number): string {

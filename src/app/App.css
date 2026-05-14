@@ -108,13 +108,6 @@ select {
   opacity: 0;
 }
 
-.workspace {
-  display: grid;
-  flex: 1;
-  grid-template-columns: 250px minmax(0, 1fr) 280px;
-  min-height: 0;
-}
-
 .inspector {
   display: flex;
   flex-direction: column;
@@ -234,27 +227,6 @@ select {
   padding-left: 10px;
 }
 
-.stage-viewport {
-  overflow: auto;
-  background:
-    linear-gradient(45deg, #dfe5dc 25%, transparent 25%),
-    linear-gradient(-45deg, #dfe5dc 25%, transparent 25%),
-    linear-gradient(45deg, transparent 75%, #dfe5dc 75%),
-    linear-gradient(-45deg, transparent 75%, #dfe5dc 75%);
-  background-color: #eef1eb;
-  background-position:
-    0 0,
-    0 10px,
-    10px -10px,
-    -10px 0;
-  background-size: 20px 20px;
-  padding: 28px;
-}
-
-.konvajs-content {
-  box-shadow: 0 12px 30px rgba(31, 38, 31, 0.18);
-}
-
 @media (max-width: 760px) {
   .app-toolbar {
     align-items: flex-start;
@@ -263,10 +235,6 @@ select {
 
   .toolbar-group {
     justify-content: flex-start;
-  }
-
-  .workspace {
-    grid-template-columns: 1fr;
   }
 
   .inspector {

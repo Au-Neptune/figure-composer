@@ -2,6 +2,7 @@ import { useReducer, useRef, useState } from "react";
 import type { ChangeEvent, Dispatch, RefObject } from "react";
 import type Konva from "konva";
 import { exportStageAsFigure } from "../editor/export/exportFigure";
+import { syncExportPresetToCanvas } from "../editor/export/exportPresetSync";
 import type { ExportPreset, ExportPresetPatch } from "../editor/model/exportPreset";
 import type {
   CanvasSettingsPatch,
@@ -10,7 +11,7 @@ import type {
   ToolMode,
 } from "../editor/model/figure";
 import type { Rect } from "../editor/model/geometry";
-import { getFigureObject, getRoi, getSourceImage } from "../editor/model/selectors";
+import { getFigureObject } from "../editor/model/selectors";
 import { revokeHistoryAssetUrls } from "../editor/project/assetUrls";
 import {
   canRedo,
@@ -22,21 +23,20 @@ import {
 } from "../editor/state/historyStore";
 import type { ProjectAction } from "../editor/state/projectStore";
 import {
-  validateSourceImageDelete,
-  validateSourceImageRename,
-} from "../editor/state/sourceImageCommands";
-import { readImageFile } from "../platform/browser/fileAdapter";
-import {
   openProjectFolder,
   saveProjectFolder,
 } from "../platform/browser/projectFolderAdapter";
-import { createDerivedSourceCrop } from "../platform/browser/derivedSourceCrop";
-import { useEditorShortcuts } from "./useEditorShortcuts";
 import {
-  runWithVisibleAsyncCommand,
-  runWithVisibleCommand,
-  runWithVisibleError,
-} from "./visibleErrors";
+  createFileInputImportHandler,
+  createImportFilesHandler,
+} from "./sourceImageImport";
+import {
+  createDeleteSourceImageHandler,
+  createDerivedCropHandler,
+  createRenameSourceImageHandler,
+} from "./sourceImageHandlers";
+import { useEditorShortcuts } from "./useEditorShortcuts";
+import { runWithVisibleCommand, runWithVisibleError } from "./visibleErrors";
 
 export interface FigureComposerController {
   readonly figure: Figure;
@@ -48,6 +48,7 @@ export interface FigureComposerController {
   readonly exportDialogOpen: boolean;
   readonly dispatchProjectAction: (action: ProjectAction) => void;
   readonly handleImport: (event: ChangeEvent<HTMLInputElement>) => Promise<void>;
+  readonly handleImportFiles: (files: readonly File[]) => Promise<void>;
   readonly handleOpenProject: () => Promise<void>;
   readonly handleSaveProject: () => Promise<void>;
   readonly handleUndo: () => void;
@@ -96,12 +97,6 @@ interface ControllerHandlerOptions {
   readonly stageRef: RefObject<Konva.Stage | null>;
 }
 
-interface SourceImageHandlerOptions {
-  readonly figure: Figure;
-  readonly dispatch: Dispatch<HistoryAction>;
-  readonly setErrorMessage: (message: string | null) => void;
-}
-
 export function useFigureComposerController(): FigureComposerController {
   const [history, dispatch] = useReducer(
     historyReducer,
@@ -112,7 +107,10 @@ export function useFigureComposerController(): FigureComposerController {
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const stageRef = useRef<Konva.Stage>(null);
   const figure = history.present;
-  const exportPreset = getPrimaryExportPreset(figure.exportPresets);
+  const exportPreset = syncExportPresetToCanvas(
+    getPrimaryExportPreset(figure.exportPresets),
+    figure.canvas,
+  );
   const undoAvailable = canUndo(history);
   const redoAvailable = canRedo(history);
 
@@ -152,20 +150,17 @@ function createControllerHandlers({
   setExportDialogOpen,
   stageRef,
 }: ControllerHandlerOptions): FigureComposerHandlers {
+  const importFiles = createImportFilesHandler(dispatch, setErrorMessage);
   return {
     dispatchProjectAction: (action) => dispatch(action),
-    handleImport: createImportHandler(dispatch, setErrorMessage),
+    handleImport: createFileInputImportHandler(importFiles),
+    handleImportFiles: importFiles,
     handleOpenProject: createOpenProjectHandler(dispatch, setErrorMessage, history),
     handleSaveProject: () => runWithVisibleError(() => saveProjectFolder(figure), setErrorMessage),
     handleUndo: () => dispatch({ type: "undoRequested" }),
     handleRedo: () => dispatch({ type: "redoRequested" }),
     handleToolChange: (tool) => dispatch({ type: "toolChanged", tool }),
-    handleOpenExportDialog: () => setExportDialogOpen(true),
-    handleCloseExportDialog: () => setExportDialogOpen(false),
-    handleConfirmExportFigure: () => {
-      exportFigure(stageRef.current, exportPreset);
-      setExportDialogOpen(false);
-    },
+    ...createExportHandlers({ exportPreset, dispatch, setExportDialogOpen, stageRef }),
     handleCanvasSettingsChange: (patch) => dispatch({ type: "canvasSettingsChanged", patch }),
     handleDockInset: (objectId, side) => dispatch({ type: "insetDocked", objectId, side }),
     handleSelectFigureObject: (objectId) => dispatch({ type: "figureObjectSelected", objectId }),
@@ -189,7 +184,35 @@ function createControllerHandlers({
       dispatch,
       setErrorMessage,
     }),
-    handleExportPresetChange: (patch) => dispatch({ type: "exportPresetChanged", presetId: exportPreset.id, patch }),
+  };
+}
+
+function createExportHandlers({
+  exportPreset,
+  dispatch,
+  setExportDialogOpen,
+  stageRef,
+}: {
+  readonly exportPreset: ExportPreset;
+  readonly dispatch: Dispatch<HistoryAction>;
+  readonly setExportDialogOpen: (open: boolean) => void;
+  readonly stageRef: RefObject<Konva.Stage | null>;
+}): Pick<
+  FigureComposerHandlers,
+  | "handleOpenExportDialog"
+  | "handleCloseExportDialog"
+  | "handleConfirmExportFigure"
+  | "handleExportPresetChange"
+> {
+  return {
+    handleOpenExportDialog: () => setExportDialogOpen(true),
+    handleCloseExportDialog: () => setExportDialogOpen(false),
+    handleConfirmExportFigure: () => {
+      exportFigure(stageRef.current, exportPreset);
+      setExportDialogOpen(false);
+    },
+    handleExportPresetChange: (patch) =>
+      dispatch({ type: "exportPresetChanged", presetId: exportPreset.id, patch }),
   };
 }
 
@@ -221,20 +244,6 @@ function getPrimaryExportPreset(exportPresets: readonly ExportPreset[]): ExportP
   return preset;
 }
 
-function createImportHandler(
-  dispatch: Dispatch<ProjectAction>,
-  setErrorMessage: (message: string | null) => void,
-) {
-  return async (event: ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.currentTarget.files ?? []);
-    event.currentTarget.value = "";
-    for (const file of files) {
-      const imported = await runWithVisibleError(() => readImageFile(file), setErrorMessage);
-      dispatch({ type: "sourceImageImported", imported });
-    }
-  };
-}
-
 function createOpenProjectHandler(
   dispatch: Dispatch<ProjectAction>,
   setErrorMessage: (message: string | null) => void,
@@ -245,44 +254,6 @@ function createOpenProjectHandler(
     dispatch({ type: "projectOpened", figure: openedFigure });
     revokeHistoryAssetUrls(history);
   };
-}
-
-function createRenameSourceImageHandler({
-  figure,
-  dispatch,
-  setErrorMessage,
-}: SourceImageHandlerOptions) {
-  return (sourceImageId: string, name: string): boolean =>
-    runWithVisibleCommand(() => {
-      validateSourceImageRename(figure, { sourceImageId, name });
-      dispatch({ type: "sourceImageRenamed", sourceImageId, name });
-    }, setErrorMessage);
-}
-
-function createDeleteSourceImageHandler({
-  figure,
-  dispatch,
-  setErrorMessage,
-}: SourceImageHandlerOptions) {
-  return (sourceImageId: string): boolean =>
-    runWithVisibleCommand(() => {
-      validateSourceImageDelete(figure, sourceImageId);
-      dispatch({ type: "sourceImageDeleted", sourceImageId });
-    }, setErrorMessage);
-}
-
-function createDerivedCropHandler({
-  figure,
-  dispatch,
-  setErrorMessage,
-}: SourceImageHandlerOptions) {
-  return (roiId: string): Promise<boolean> =>
-    runWithVisibleAsyncCommand(async () => {
-      const roi = getRoi(figure, roiId);
-      const sourceImage = getSourceImage(figure, roi.sourceImageId);
-      const derived = await createDerivedSourceCrop({ sourceImage, roi });
-      dispatch({ type: "derivedSourceImageCreated", derived });
-    }, setErrorMessage);
 }
 
 function exportFigure(stage: Konva.Stage | null, preset: ExportPreset): void {
