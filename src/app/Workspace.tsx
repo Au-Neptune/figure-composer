@@ -28,7 +28,6 @@ export function Workspace({ controller }: WorkspaceProps): ReactElement {
         errorMessage={controller.errorMessage}
         onCanvasSettingsChange={controller.handleCanvasSettingsChange}
         onDockInset={controller.handleDockInset}
-        onCreateDerivedCrop={controller.handleCreateDerivedCrop}
         onDeleteRoi={controller.handleDeleteRoi}
         onSelectFigureObject={controller.handleSelectFigureObject}
         onRenameSourceImage={controller.handleRenameSourceImage}

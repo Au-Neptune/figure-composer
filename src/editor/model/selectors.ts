@@ -1,6 +1,5 @@
-import type { Figure, FigureObject, SourceImageObject } from "./figure";
+import type { Figure, FigureObject } from "./figure";
 import type { Point, Rect } from "./geometry";
-import { clampRectToSize } from "./geometry";
 import type { RegionOfInterest } from "./roi";
 import type { SourceImage } from "./sourceImage";
 
@@ -26,17 +25,6 @@ export function getFigureObject(
   return object;
 }
 
-export function getSourceImageObject(
-  figure: Figure,
-  objectId: string,
-): SourceImageObject {
-  const object = getFigureObject(figure, objectId);
-  if (object.kind !== "sourceImage") {
-    throw new Error(`Figure object is not a Source Image: ${objectId}`);
-  }
-  return object;
-}
-
 export function getRoi(figure: Figure, roiId: string): RegionOfInterest {
   const roi = figure.rois.find((item) => item.id === roiId);
   if (!roi) {
@@ -45,15 +33,12 @@ export function getRoi(figure: Figure, roiId: string): RegionOfInterest {
   return roi;
 }
 
-export function findTopSourceImageAtPoint(
+export function findTopFigureObjectAtPoint(
   figure: Figure,
   point: Point,
-): SourceImageObject | null {
+): FigureObject | null {
   const objects = [...figure.objects].reverse();
-  const object = objects.find(
-    (item) => item.kind === "sourceImage" && pointInsideObject(point, item),
-  );
-  return object && object.kind === "sourceImage" ? object : null;
+  return objects.find((item) => pointInsideObject(point, item)) ?? null;
 }
 
 export function pointInsideObject(point: Point, object: FigureObject): boolean {
@@ -64,32 +49,45 @@ export function pointInsideObject(point: Point, object: FigureObject): boolean {
 
 export function mapStageRectToSourceRect(
   stageRect: Rect,
-  sourceObject: SourceImageObject,
-  sourceImage: SourceImage,
+  figure: Figure,
+  sourceObject: FigureObject,
 ): Rect {
-  const scaleX = sourceImage.width / sourceObject.width;
-  const scaleY = sourceImage.height / sourceObject.height;
-  const sourceRect = {
-    x: (stageRect.x - sourceObject.x) * scaleX,
-    y: (stageRect.y - sourceObject.y) * scaleY,
+  const visibleSourceRect = getVisibleSourceRect(figure, sourceObject);
+  const scaleX = visibleSourceRect.width / sourceObject.width;
+  const scaleY = visibleSourceRect.height / sourceObject.height;
+  return {
+    x: visibleSourceRect.x + (stageRect.x - sourceObject.x) * scaleX,
+    y: visibleSourceRect.y + (stageRect.y - sourceObject.y) * scaleY,
     width: stageRect.width * scaleX,
     height: stageRect.height * scaleY,
   };
-  return clampRectToSize(sourceRect, sourceImage);
 }
 
 export function mapSourceRectToStageRect(
   sourceRect: Rect,
-  sourceObject: SourceImageObject,
-  sourceImage: SourceImage,
+  figure: Figure,
+  sourceObject: FigureObject,
 ): Rect {
-  const scaleX = sourceObject.width / sourceImage.width;
-  const scaleY = sourceObject.height / sourceImage.height;
+  const visibleSourceRect = getVisibleSourceRect(figure, sourceObject);
+  const scaleX = sourceObject.width / visibleSourceRect.width;
+  const scaleY = sourceObject.height / visibleSourceRect.height;
   return {
-    x: sourceObject.x + sourceRect.x * scaleX,
-    y: sourceObject.y + sourceRect.y * scaleY,
+    x: sourceObject.x + (sourceRect.x - visibleSourceRect.x) * scaleX,
+    y: sourceObject.y + (sourceRect.y - visibleSourceRect.y) * scaleY,
     width: sourceRect.width * scaleX,
     height: sourceRect.height * scaleY,
   };
 }
 
+function getVisibleSourceRect(figure: Figure, object: FigureObject): Rect {
+  if (object.kind === "inset") {
+    return getRoi(figure, object.roiId).rect;
+  }
+  const sourceImage = getSourceImage(figure, object.sourceImageId);
+  return {
+    x: 0,
+    y: 0,
+    width: sourceImage.width,
+    height: sourceImage.height,
+  };
+}

@@ -118,7 +118,8 @@ function BoundsField({
         type="number"
         min={getFieldMinimum(field)}
         step={1}
-        value={object[field]}
+        inputMode="numeric"
+        value={toIntegerFieldValue(object[field])}
         onChange={(event) => updateNumberField(field, object.id, event, onChange)}
       />
     </label>
@@ -143,7 +144,7 @@ function updateNumberField(
   if (!event.currentTarget.validity.valid || event.currentTarget.value === "") {
     return;
   }
-  onChange(objectId, { [field]: Number(event.currentTarget.value) });
+  onChange(objectId, { [field]: toIntegerFieldValue(Number(event.currentTarget.value)) });
 }
 
 function getFieldLabel(field: ObjectBoundsField): string {
@@ -152,4 +153,8 @@ function getFieldLabel(field: ObjectBoundsField): string {
 
 function getFieldMinimum(field: ObjectBoundsField): number {
   return field === "width" || field === "height" ? MIN_OBJECT_SIDE_PX : 0;
+}
+
+function toIntegerFieldValue(value: number): number {
+  return Math.round(value);
 }

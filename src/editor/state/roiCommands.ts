@@ -1,10 +1,17 @@
 import type { Figure, FigureObject } from "../model/figure";
 import { getRoi } from "../model/selectors";
 
+export interface RoiDeleteBlocker {
+  readonly message: string;
+}
+
 export function deleteRoi(figure: Figure, roiId: string): Figure {
   getRoi(figure, roiId);
-  assertRoiHasNoDerivedSourceImage(figure, roiId);
   const linkedInsetIds = createLinkedInsetIdSet(figure.objects, roiId);
+  const blocker = getRoiDeleteBlocker(figure, roiId, linkedInsetIds);
+  if (blocker) {
+    throw new Error(blocker.message);
+  }
   const deletedReferenceIds = new Set([roiId, ...linkedInsetIds]);
   return {
     ...figure,
@@ -13,6 +20,31 @@ export function deleteRoi(figure: Figure, roiId: string): Figure {
     sourceImages: removeDeletedReferences(figure, deletedReferenceIds),
     selectedObjectId: getNextSelectedObjectId(figure, linkedInsetIds),
     selectedRoiId: figure.selectedRoiId === roiId ? null : figure.selectedRoiId,
+  };
+}
+
+export function getRoiDeleteBlocker(
+  figure: Figure,
+  roiId: string,
+  linkedInsetIds = createLinkedInsetIdSet(figure.objects, roiId),
+): RoiDeleteBlocker | null {
+  getRoi(figure, roiId);
+  return (
+    getChildRoiBlocker(figure, linkedInsetIds) ??
+    getDerivedSourceImageBlocker(figure, roiId)
+  );
+}
+
+function getChildRoiBlocker(
+  figure: Figure,
+  linkedInsetIds: ReadonlySet<string>,
+): RoiDeleteBlocker | null {
+  const childRoi = figure.rois.find((roi) => linkedInsetIds.has(roi.sourceObjectId));
+  if (!childRoi) {
+    return null;
+  }
+  return {
+    message: `Cannot delete ROI because child ROI ${childRoi.id} depends on it.`,
   };
 }
 
@@ -49,14 +81,18 @@ function getNextSelectedObjectId(
   return figure.selectedObjectId;
 }
 
-function assertRoiHasNoDerivedSourceImage(figure: Figure, roiId: string): void {
+function getDerivedSourceImageBlocker(
+  figure: Figure,
+  roiId: string,
+): RoiDeleteBlocker | null {
   const derivedSourceImage = figure.sourceImages.find(
     (sourceImage) =>
       sourceImage.lineage.kind === "derived" && sourceImage.lineage.roiId === roiId,
   );
-  if (derivedSourceImage) {
-    throw new Error(
-      `Cannot delete ROI because Source Image "${derivedSourceImage.name}" was derived from it.`,
-    );
+  if (!derivedSourceImage) {
+    return null;
   }
+  return {
+    message: `Cannot delete ROI because Source Image "${derivedSourceImage.name}" was derived from it.`,
+  };
 }

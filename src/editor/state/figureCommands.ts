@@ -4,7 +4,6 @@ import type {
   FigureObject,
   InsetObject,
   InsetDockSide,
-  SourceImageObject,
   ToolMode,
 } from "../model/figure";
 import type { Rect, Size } from "../model/geometry";
@@ -20,7 +19,6 @@ import {
   getFigureObject,
   getRoi,
   getSourceImage,
-  getSourceImageObject,
   mapStageRectToSourceRect,
 } from "../model/selectors";
 import {
@@ -36,14 +34,18 @@ export function createLinkedInsetFromStageRect(
   sourceObjectId: string,
   stageRect: Rect,
 ): Figure {
-  const sourceObject = getSourceImageObject(figure, sourceObjectId);
+  const sourceObject = getFigureObject(figure, sourceObjectId);
   const sourceImage = getSourceImage(figure, sourceObject.sourceImageId);
-  const sourceRect = mapStageRectToSourceRect(stageRect, sourceObject, sourceImage);
+  const constrainedStageRect = constrainRectWithinRect(stageRect, sourceObject);
+  const sourceRect = mapStageRectToSourceRect(
+    constrainedStageRect,
+    figure,
+    sourceObject,
+  );
   assertRenderableRect(sourceRect, "Region Of Interest");
   const roi = createRoi(sourceImage.id, sourceObject.id, sourceRect);
   const inset = createInsetObject({
     figure,
-    sourceObject,
     sourceImageId: sourceImage.id,
     roi,
   });
@@ -99,14 +101,9 @@ export function updateRoiFromStageRect(
   stageRect: Rect,
 ): Figure {
   const roi = getRoi(figure, roiId);
-  const sourceObject = getSourceImageObject(figure, roi.sourceObjectId);
-  const sourceImage = getSourceImage(figure, roi.sourceImageId);
+  const sourceObject = getFigureObject(figure, roi.sourceObjectId);
   const constrainedStageRect = constrainRectWithinRect(stageRect, sourceObject);
-  const sourceRect = mapStageRectToSourceRect(
-    constrainedStageRect,
-    sourceObject,
-    sourceImage,
-  );
+  const sourceRect = mapStageRectToSourceRect(constrainedStageRect, figure, sourceObject);
   assertRenderableRect(sourceRect, "Region Of Interest");
   return {
     ...figure,
@@ -135,7 +132,7 @@ export function dockInsetObject(
 ): Figure {
   const inset = getInsetObject(figure, objectId);
   const roi = getRoi(figure, inset.roiId);
-  const sourceObject = getSourceImageObject(figure, roi.sourceObjectId);
+  const sourceObject = getFigureObject(figure, roi.sourceObjectId);
   const bounds = constrainRectPosition(
     createDockedInsetBounds(inset, sourceObject, side),
     figure.canvas,
@@ -194,14 +191,12 @@ function createRoi(
 
 interface CreateInsetObjectOptions {
   readonly figure: Figure;
-  readonly sourceObject: SourceImageObject;
   readonly sourceImageId: string;
   readonly roi: RegionOfInterest;
 }
 
 function createInsetObject({
   figure,
-  sourceObject,
   sourceImageId,
   roi,
 }: CreateInsetObjectOptions): InsetObject {
@@ -216,6 +211,7 @@ function createInsetObject({
     width: size.width,
     height: size.height,
   };
+  const sourceObject = getFigureObject(figure, roi.sourceObjectId);
   const dockedBounds = createDockedInsetBounds(inset, sourceObject, "right");
   return constrainObjectToCanvas({ ...inset, ...dockedBounds }, figure.canvas);
 }

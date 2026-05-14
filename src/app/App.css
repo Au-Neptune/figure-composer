@@ -227,6 +227,13 @@ select {
   padding-left: 10px;
 }
 
+.blocking-message {
+  margin: 8px 0 0;
+  color: #7c2d12;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
 @media (max-width: 760px) {
   .app-toolbar {
     align-items: flex-start;

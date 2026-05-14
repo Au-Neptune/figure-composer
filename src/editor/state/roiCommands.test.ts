@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { Figure, SourceImageObject } from "../model/figure";
 import type { ImportedSourceImage } from "../model/sourceImage";
 import { createInitialProject, projectReducer } from "./projectStore";
+import { getRoiDeleteBlocker } from "./roiCommands";
 
 const IMPORTED_SOURCE_IMAGE: ImportedSourceImage = {
   name: "cells.png",
@@ -35,6 +36,18 @@ describe("ROI commands", () => {
       projectReducer(figure, { type: "roiDeleted", roiId }),
     ).toThrow("Cannot delete ROI because Source Image");
   });
+
+  it("blocks ROI deletion while child ROIs use its linked inset", () => {
+    const figure = createFigureWithNestedRoi();
+    const parentRoiId = getOnlyRoiId(figure);
+
+    expect(getRoiDeleteBlocker(figure, parentRoiId)?.message).toContain(
+      "child ROI",
+    );
+    expect(() =>
+      projectReducer(figure, { type: "roiDeleted", roiId: parentRoiId }),
+    ).toThrow("Cannot delete ROI because child ROI");
+  });
 });
 
 function createFigureWithLinkedInset(): Figure {
@@ -62,19 +75,40 @@ function createFigureWithDerivedSource(): Figure {
   if (!roi) {
     throw new Error("Expected an ROI in the test Figure.");
   }
-  return projectReducer(figure, {
-    type: "derivedSourceImageCreated",
-    derived: {
-      name: "cells crop.png",
-      assetUrl: "blob:derived-crop",
-      width: 120,
-      height: 80,
-      lineage: {
-        kind: "derived",
-        parentSourceImageId: parent.id,
-        roiId: roi.id,
-        cropRect: roi.rect,
+  return {
+    ...figure,
+    sourceImages: [
+      ...figure.sourceImages,
+      {
+        id: "source_derived",
+        name: "cells crop.png",
+        assetUrl: "blob:derived-crop",
+        assetFileName: "source_derived_cells-crop.png",
+        width: 120,
+        height: 80,
+        referencedBy: [],
+        lineage: {
+          kind: "derived",
+          parentSourceImageId: parent.id,
+          roiId: roi.id,
+          cropRect: roi.rect,
+        },
       },
+    ],
+  };
+}
+
+function createFigureWithNestedRoi(): Figure {
+  const figure = createFigureWithLinkedInset();
+  const parentInset = getOnlyInset(figure);
+  return projectReducer(figure, {
+    type: "linkedInsetCreated",
+    sourceObjectId: parentInset.id,
+    stageRect: {
+      x: parentInset.x,
+      y: parentInset.y,
+      width: parentInset.width / 2,
+      height: parentInset.height / 2,
     },
   });
 }
@@ -101,4 +135,12 @@ function getOnlyRoiId(figure: Figure): string {
     throw new Error("Expected an ROI in the test Figure.");
   }
   return roi.id;
+}
+
+function getOnlyInset(figure: Figure) {
+  const object = figure.objects.find((item) => item.kind === "inset");
+  if (!object || object.kind !== "inset") {
+    throw new Error("Expected an Inset object in the test Figure.");
+  }
+  return object;
 }

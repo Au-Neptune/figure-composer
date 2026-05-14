@@ -1,4 +1,4 @@
-import type { FigureObject, InsetObject, SourceImageObject } from "../model/figure";
+import type { FigureObject, InsetObject } from "../model/figure";
 import type { RegionOfInterest } from "../model/roi";
 import type { SerializedFigure, SerializedSourceImage } from "./projectJson";
 
@@ -68,8 +68,8 @@ function validateRoiSourceObject(
   index: ReferenceIndex,
 ): void {
   const object = index.objectsById.get(roi.sourceObjectId);
-  if (!object || object.kind !== "sourceImage") {
-    throw new Error(`ROI ${roi.id} references missing Source Image object.`);
+  if (!object) {
+    throw new Error(`ROI ${roi.id} references missing source object.`);
   }
   if (object.sourceImageId !== roi.sourceImageId) {
     throw new Error(`ROI ${roi.id} source does not match object ${object.id}.`);

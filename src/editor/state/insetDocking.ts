@@ -1,8 +1,8 @@
 import type {
   Figure,
+  FigureObject,
   InsetDockSide,
   InsetObject,
-  SourceImageObject,
 } from "../model/figure";
 import type { Rect } from "../model/geometry";
 import { getFigureObject } from "../model/selectors";
@@ -18,7 +18,7 @@ export function getInsetObject(figure: Figure, objectId: string): InsetObject {
 
 export function createDockedInsetBounds(
   inset: InsetObject,
-  sourceObject: SourceImageObject,
+  sourceObject: FigureObject,
   side: InsetDockSide,
 ): Rect {
   const centeredX = sourceObject.x + (sourceObject.width - inset.width) / 2;

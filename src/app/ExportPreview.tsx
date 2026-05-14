@@ -9,9 +9,9 @@ import type {
 import type { Rect, Size } from "../editor/model/geometry";
 import type { RegionOfInterest } from "../editor/model/roi";
 import {
+  getFigureObject,
   getRoi,
   getSourceImage,
-  getSourceImageObject,
   mapSourceRectToStageRect,
 } from "../editor/model/selectors";
 
@@ -127,9 +127,8 @@ function RoiFramePreview({
   if (!roi.frame.visible) {
     return null;
   }
-  const sourceObject = getSourceImageObject(figure, roi.sourceObjectId);
-  const sourceImage = getSourceImage(figure, roi.sourceImageId);
-  const stageRect = mapSourceRectToStageRect(roi.rect, sourceObject, sourceImage);
+  const sourceObject = getFigureObject(figure, roi.sourceObjectId);
+  const stageRect = mapSourceRectToStageRect(roi.rect, figure, sourceObject);
   return <div className="export-preview-roi" style={createRoiStyle(stageRect, roi, metrics)} />;
 }
 

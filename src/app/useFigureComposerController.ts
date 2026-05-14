@@ -32,7 +32,6 @@ import {
 } from "./sourceImageImport";
 import {
   createDeleteSourceImageHandler,
-  createDerivedCropHandler,
   createRenameSourceImageHandler,
 } from "./sourceImageHandlers";
 import { useEditorShortcuts } from "./useEditorShortcuts";
@@ -64,7 +63,6 @@ export interface FigureComposerController {
     objectId: string,
     patch: FigureObjectBoundsPatch,
   ) => void;
-  readonly handleCreateDerivedCrop: (roiId: string) => Promise<boolean>;
   readonly handleDeleteRoi: (roiId: string) => boolean;
   readonly handleRenameSourceImage: (
     sourceImageId: string,
@@ -165,11 +163,6 @@ function createControllerHandlers({
     handleDockInset: (objectId, side) => dispatch({ type: "insetDocked", objectId, side }),
     handleSelectFigureObject: (objectId) => dispatch({ type: "figureObjectSelected", objectId }),
     handleFigureObjectBoundsChange: (objectId, patch) => dispatchObjectBoundsChange({ figure, dispatch, objectId, patch }),
-    handleCreateDerivedCrop: createDerivedCropHandler({
-      figure,
-      dispatch,
-      setErrorMessage,
-    }),
     handleDeleteRoi: (roiId) =>
       runWithVisibleCommand(() => {
         dispatch({ type: "roiDeleted", roiId });

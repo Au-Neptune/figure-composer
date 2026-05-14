@@ -3,12 +3,11 @@ import type Konva from "konva";
 import type { Box } from "konva/lib/shapes/Transformer";
 import { Rect, Transformer } from "react-konva";
 import { MIN_ROI_SIDE_PX } from "../state/editorDefaults";
-import type { Figure, SourceImageObject } from "../model/figure";
+import type { Figure, FigureObject } from "../model/figure";
 import type { Point, Rect as ModelRect } from "../model/geometry";
 import { constrainRectWithinRect } from "../model/geometry";
 import {
-  getSourceImage,
-  getSourceImageObject,
+  getFigureObject,
   mapSourceRectToStageRect,
 } from "../model/selectors";
 import type { RegionOfInterest } from "../model/roi";
@@ -26,9 +25,8 @@ export function RoiFrameRenderer({
   roi,
   dispatch,
 }: RoiFrameRendererProps): ReactElement | null {
-  const sourceObject = getSourceImageObject(figure, roi.sourceObjectId);
-  const sourceImage = getSourceImage(figure, roi.sourceImageId);
-  const stageRect = mapSourceRectToStageRect(roi.rect, sourceObject, sourceImage);
+  const sourceObject = getFigureObject(figure, roi.sourceObjectId);
+  const stageRect = mapSourceRectToStageRect(roi.rect, figure, sourceObject);
   if (!roi.frame.visible) {
     return null;
   }
@@ -44,7 +42,7 @@ export function RoiFrameRenderer({
 }
 
 interface VisibleRoiFrameProps extends RoiFrameRendererProps {
-  readonly sourceObject: SourceImageObject;
+  readonly sourceObject: FigureObject;
   readonly stageRect: ModelRect;
 }
 
@@ -143,7 +141,7 @@ function dispatchRoiResize(
 function constrainRoiDragPosition(
   position: Point,
   stageRect: ModelRect,
-  sourceObject: SourceImageObject,
+  sourceObject: FigureObject,
 ): Point {
   const rect = constrainRectWithinRect({ ...stageRect, ...position }, sourceObject);
   return { x: rect.x, y: rect.y };
@@ -172,7 +170,7 @@ function selectRoiFrame({
 function limitRoiBox(
   oldBox: Box,
   newBox: Box,
-  sourceObject: SourceImageObject,
+  sourceObject: FigureObject,
 ): Box {
   if (newBox.width < MIN_ROI_SIDE_PX || newBox.height < MIN_ROI_SIDE_PX) {
     return oldBox;
@@ -185,7 +183,7 @@ function limitRoiBox(
 
 function roiBoxExceedsSourceObject(
   box: Box,
-  sourceObject: SourceImageObject,
+  sourceObject: FigureObject,
 ): boolean {
   return (
     box.x < sourceObject.x ||

@@ -1,13 +1,11 @@
 import type { Dispatch } from "react";
 import type { Figure } from "../editor/model/figure";
-import { getRoi, getSourceImage } from "../editor/model/selectors";
 import type { HistoryAction } from "../editor/state/historyStore";
 import {
   validateSourceImageDelete,
   validateSourceImageRename,
 } from "../editor/state/sourceImageCommands";
-import { createDerivedSourceCrop } from "../platform/browser/derivedSourceCrop";
-import { runWithVisibleAsyncCommand, runWithVisibleCommand } from "./visibleErrors";
+import { runWithVisibleCommand } from "./visibleErrors";
 
 interface SourceImageHandlerOptions {
   readonly figure: Figure;
@@ -36,19 +34,5 @@ export function createDeleteSourceImageHandler({
     runWithVisibleCommand(() => {
       validateSourceImageDelete(figure, sourceImageId);
       dispatch({ type: "sourceImageDeleted", sourceImageId });
-    }, setErrorMessage);
-}
-
-export function createDerivedCropHandler({
-  figure,
-  dispatch,
-  setErrorMessage,
-}: SourceImageHandlerOptions) {
-  return (roiId: string): Promise<boolean> =>
-    runWithVisibleAsyncCommand(async () => {
-      const roi = getRoi(figure, roiId);
-      const sourceImage = getSourceImage(figure, roi.sourceImageId);
-      const derived = await createDerivedSourceCrop({ sourceImage, roi });
-      dispatch({ type: "derivedSourceImageCreated", derived });
     }, setErrorMessage);
 }

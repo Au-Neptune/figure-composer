@@ -29,7 +29,7 @@ describe("project reference validation", () => {
     ).toThrow("Figure object");
   });
 
-  it("rejects ROIs that reference missing Source Image objects", () => {
+  it("rejects ROIs that reference missing source objects", () => {
     expect(() =>
       parseMutatedProjectJson((projectJson) => ({
         ...projectJson,
@@ -41,7 +41,13 @@ describe("project reference validation", () => {
           })),
         },
       })),
-    ).toThrow("references missing Source Image object");
+    ).toThrow("references missing source object");
+  });
+
+  it("accepts ROIs that reference inset source objects", () => {
+    const projectJson = createProjectJson(createFigureWithNestedInset());
+
+    expect(() => parseProjectJsonText(JSON.stringify(projectJson))).not.toThrow();
   });
 
   it("rejects Insets that reference missing ROIs", () => {
@@ -99,10 +105,33 @@ function createFigureWithLinkedInset(): Figure {
   });
 }
 
+function createFigureWithNestedInset(): Figure {
+  const figure = createFigureWithLinkedInset();
+  const inset = getOnlyInset(figure);
+  return projectReducer(figure, {
+    type: "linkedInsetCreated",
+    sourceObjectId: inset.id,
+    stageRect: {
+      x: inset.x,
+      y: inset.y,
+      width: inset.width / 2,
+      height: inset.height / 2,
+    },
+  });
+}
+
 function getOnlySourceObject(figure: Figure) {
   const object = figure.objects.find((item) => item.kind === "sourceImage");
   if (!object || object.kind !== "sourceImage") {
     throw new Error("Expected a Source Image object in the test Figure.");
+  }
+  return object;
+}
+
+function getOnlyInset(figure: Figure) {
+  const object = figure.objects.find((item) => item.kind === "inset");
+  if (!object || object.kind !== "inset") {
+    throw new Error("Expected an Inset object in the test Figure.");
   }
   return object;
 }

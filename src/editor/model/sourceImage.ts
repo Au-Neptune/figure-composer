@@ -32,7 +32,3 @@ export interface ImportedSourceImage {
   readonly width: number;
   readonly height: number;
 }
-
-export interface DerivedSourceImageInput extends ImportedSourceImage {
-  readonly lineage: DerivedSourceImageLineage;
-}

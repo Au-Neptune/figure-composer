@@ -97,7 +97,6 @@ function createHistoryFromPresent(present: Figure): HistoryState {
 function isUndoableProjectAction(action: ProjectAction): boolean {
   switch (action.type) {
     case "sourceImageImported":
-    case "derivedSourceImageCreated":
     case "sourceImageRenamed":
     case "sourceImageDeleted":
     case "linkedInsetCreated":

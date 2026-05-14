@@ -2,7 +2,6 @@ import type { ExportPreset } from "../model/exportPreset";
 import type { Figure, SourceImageObject } from "../model/figure";
 import { fitWithin } from "../model/geometry";
 import type {
-  DerivedSourceImageInput,
   ImportedSourceImage,
   SourceImage,
   SourceImageLineage,
@@ -49,13 +48,6 @@ export function addSourceImageToFigure(
     ...imported,
     lineage: { kind: "imported" },
   });
-}
-
-export function addDerivedSourceImageToFigure(
-  figure: Figure,
-  derived: DerivedSourceImageInput,
-): Figure {
-  return addSourceImageAssetToFigure(figure, derived);
 }
 
 interface SourceImageAssetInput extends ImportedSourceImage {
