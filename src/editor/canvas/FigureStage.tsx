@@ -3,11 +3,13 @@ import type { Dispatch, ReactElement, RefObject } from "react";
 import type Konva from "konva";
 import { Layer, Rect, Stage } from "react-konva";
 import type { Figure } from "../model/figure";
+import type { Size } from "../model/geometry";
 import { hasRenderableArea, normalizeRect } from "../model/geometry";
 import type { PlacementGuide } from "../model/placementSnapping";
 import type { ProjectAction } from "../state/projectStore";
 import type { DraftRoi } from "../tools/useRoiDraftTool";
 import { useRoiDraftTool } from "../tools/useRoiDraftTool";
+import { CanvasResizeHandle } from "./CanvasResizeHandle";
 import { ObjectRenderer } from "./ObjectRenderer";
 import { PlacementGuideOverlay } from "./PlacementGuideOverlay";
 import { RoiFrameRenderer } from "./RoiFrameRenderer";
@@ -25,12 +27,14 @@ export function FigureStage({
 }: FigureStageProps): ReactElement {
   const roiDraftTool = useRoiDraftTool({ figure, stageRef, dispatch });
   const [placementGuides, setPlacementGuides] = useState<readonly PlacementGuide[]>([]);
+  const [draftCanvasSize, setDraftCanvasSize] = useState<Size | null>(null);
+  const displayedCanvas = draftCanvasSize ?? figure.canvas;
 
   return (
     <Stage
       ref={stageRef}
-      width={figure.canvas.width}
-      height={figure.canvas.height}
+      width={displayedCanvas.width}
+      height={displayedCanvas.height}
       onMouseDown={roiDraftTool.handlePointerDown}
       onTouchStart={roiDraftTool.handlePointerDown}
       onMouseMove={roiDraftTool.handlePointerMove}
@@ -40,10 +44,12 @@ export function FigureStage({
     >
       <FigureLayer
         figure={figure}
+        canvas={displayedCanvas}
         dispatch={dispatch}
         draftRoi={roiDraftTool.draftRoi}
         placementGuides={placementGuides}
         onPlacementGuidesChange={setPlacementGuides}
+        onCanvasResizePreview={setDraftCanvasSize}
       />
     </Stage>
   );
@@ -51,27 +57,71 @@ export function FigureStage({
 
 function FigureLayer({
   figure,
+  canvas,
   dispatch,
   draftRoi,
   placementGuides,
   onPlacementGuidesChange,
+  onCanvasResizePreview,
 }: {
   readonly figure: Figure;
+  readonly canvas: Size;
   readonly dispatch: Dispatch<ProjectAction>;
   readonly draftRoi: DraftRoi | null;
   readonly placementGuides: readonly PlacementGuide[];
   readonly onPlacementGuidesChange: (guides: readonly PlacementGuide[]) => void;
+  readonly onCanvasResizePreview: (size: Size | null) => void;
 }): ReactElement {
   return (
     <Layer>
-      <Rect
-        name="figure-background"
-        x={0}
-        y={0}
-        width={figure.canvas.width}
-        height={figure.canvas.height}
-        fill={figure.canvas.background}
+      <CanvasBackground canvas={canvas} background={figure.canvas.background} />
+      <FigureObjects
+        figure={figure}
+        dispatch={dispatch}
+        onPlacementGuidesChange={onPlacementGuidesChange}
       />
+      <RoiFrames figure={figure} dispatch={dispatch} />
+      <DraftRoiRect draftRoi={draftRoi} />
+      <CanvasResizeHandle
+        canvas={canvas}
+        dispatch={dispatch}
+        onResizePreview={onCanvasResizePreview}
+      />
+      <PlacementGuideOverlay canvas={canvas} guides={placementGuides} />
+    </Layer>
+  );
+}
+
+function CanvasBackground({
+  canvas,
+  background,
+}: {
+  readonly canvas: Size;
+  readonly background: string;
+}): ReactElement {
+  return (
+    <Rect
+      name="figure-background"
+      x={0}
+      y={0}
+      width={canvas.width}
+      height={canvas.height}
+      fill={background}
+    />
+  );
+}
+
+function FigureObjects({
+  figure,
+  dispatch,
+  onPlacementGuidesChange,
+}: {
+  readonly figure: Figure;
+  readonly dispatch: Dispatch<ProjectAction>;
+  readonly onPlacementGuidesChange: (guides: readonly PlacementGuide[]) => void;
+}): ReactElement {
+  return (
+    <>
       {figure.objects.map((object) => (
         <ObjectRenderer
           key={object.id}
@@ -81,6 +131,19 @@ function FigureLayer({
           onPlacementGuidesChange={onPlacementGuidesChange}
         />
       ))}
+    </>
+  );
+}
+
+function RoiFrames({
+  figure,
+  dispatch,
+}: {
+  readonly figure: Figure;
+  readonly dispatch: Dispatch<ProjectAction>;
+}): ReactElement {
+  return (
+    <>
       {figure.rois.map((roi) => (
         <RoiFrameRenderer
           key={roi.id}
@@ -89,9 +152,7 @@ function FigureLayer({
           dispatch={dispatch}
         />
       ))}
-      <DraftRoiRect draftRoi={draftRoi} />
-      <PlacementGuideOverlay canvas={figure.canvas} guides={placementGuides} />
-    </Layer>
+    </>
   );
 }
 

@@ -9,7 +9,8 @@ import type {
   InsetDockSide,
   ToolMode,
 } from "../editor/model/figure";
-import { getRoi, getSourceImage } from "../editor/model/selectors";
+import type { Rect } from "../editor/model/geometry";
+import { getFigureObject, getRoi, getSourceImage } from "../editor/model/selectors";
 import { revokeHistoryAssetUrls } from "../editor/project/assetUrls";
 import {
   canRedo,
@@ -58,7 +59,12 @@ export interface FigureComposerController {
   readonly handleCanvasSettingsChange: (patch: CanvasSettingsPatch) => void;
   readonly handleDockInset: (objectId: string, side: InsetDockSide) => void;
   readonly handleSelectFigureObject: (objectId: string) => void;
+  readonly handleFigureObjectBoundsChange: (
+    objectId: string,
+    patch: FigureObjectBoundsPatch,
+  ) => void;
   readonly handleCreateDerivedCrop: (roiId: string) => Promise<boolean>;
+  readonly handleDeleteRoi: (roiId: string) => boolean;
   readonly handleRenameSourceImage: (
     sourceImageId: string,
     name: string,
@@ -77,6 +83,8 @@ type FigureComposerHandlers = Omit<
   | "redoAvailable"
   | "exportDialogOpen"
 >;
+
+type FigureObjectBoundsPatch = Partial<Pick<Rect, "x" | "y" | "width" | "height">>;
 
 interface ControllerHandlerOptions {
   readonly figure: Figure;
@@ -148,8 +156,7 @@ function createControllerHandlers({
     dispatchProjectAction: (action) => dispatch(action),
     handleImport: createImportHandler(dispatch, setErrorMessage),
     handleOpenProject: createOpenProjectHandler(dispatch, setErrorMessage, history),
-    handleSaveProject: () =>
-      runWithVisibleError(() => saveProjectFolder(figure), setErrorMessage),
+    handleSaveProject: () => runWithVisibleError(() => saveProjectFolder(figure), setErrorMessage),
     handleUndo: () => dispatch({ type: "undoRequested" }),
     handleRedo: () => dispatch({ type: "redoRequested" }),
     handleToolChange: (tool) => dispatch({ type: "toolChanged", tool }),
@@ -159,17 +166,19 @@ function createControllerHandlers({
       exportFigure(stageRef.current, exportPreset);
       setExportDialogOpen(false);
     },
-    handleCanvasSettingsChange: (patch) =>
-      dispatch({ type: "canvasSettingsChanged", patch }),
-    handleDockInset: (objectId, side) =>
-      dispatch({ type: "insetDocked", objectId, side }),
-    handleSelectFigureObject: (objectId) =>
-      dispatch({ type: "figureObjectSelected", objectId }),
+    handleCanvasSettingsChange: (patch) => dispatch({ type: "canvasSettingsChanged", patch }),
+    handleDockInset: (objectId, side) => dispatch({ type: "insetDocked", objectId, side }),
+    handleSelectFigureObject: (objectId) => dispatch({ type: "figureObjectSelected", objectId }),
+    handleFigureObjectBoundsChange: (objectId, patch) => dispatchObjectBoundsChange({ figure, dispatch, objectId, patch }),
     handleCreateDerivedCrop: createDerivedCropHandler({
       figure,
       dispatch,
       setErrorMessage,
     }),
+    handleDeleteRoi: (roiId) =>
+      runWithVisibleCommand(() => {
+        dispatch({ type: "roiDeleted", roiId });
+      }, setErrorMessage),
     handleRenameSourceImage: createRenameSourceImageHandler({
       figure,
       dispatch,
@@ -180,9 +189,28 @@ function createControllerHandlers({
       dispatch,
       setErrorMessage,
     }),
-    handleExportPresetChange: (patch) =>
-      dispatch({ type: "exportPresetChanged", presetId: exportPreset.id, patch }),
+    handleExportPresetChange: (patch) => dispatch({ type: "exportPresetChanged", presetId: exportPreset.id, patch }),
   };
+}
+
+function dispatchObjectBoundsChange({
+  figure,
+  dispatch,
+  objectId,
+  patch,
+}: {
+  readonly figure: Figure;
+  readonly dispatch: Dispatch<HistoryAction>;
+  readonly objectId: string;
+  readonly patch: FigureObjectBoundsPatch;
+}): void {
+  const object = getFigureObject(figure, objectId);
+  const bounds = { ...object, ...patch };
+  if ("width" in patch || "height" in patch) {
+    dispatch({ type: "figureObjectResized", objectId, bounds });
+    return;
+  }
+  dispatch({ type: "figureObjectMoved", objectId, x: bounds.x, y: bounds.y });
 }
 
 function getPrimaryExportPreset(exportPresets: readonly ExportPreset[]): ExportPreset {

@@ -27,6 +27,7 @@ import {
   createInitialFigure,
 } from "./figureFactory";
 import { updateExportPreset } from "./exportPresetCommands";
+import { deleteRoi } from "./roiCommands";
 import { deleteSourceImage, renameSourceImage } from "./sourceImageCommands";
 
 export type ProjectAction =
@@ -59,6 +60,7 @@ export type ProjectAction =
       readonly bounds: Rect;
     }
   | { readonly type: "roiChanged"; readonly roiId: string; readonly stageRect: Rect }
+  | { readonly type: "roiDeleted"; readonly roiId: string }
   | { readonly type: "canvasSettingsChanged"; readonly patch: CanvasSettingsPatch }
   | { readonly type: "insetDocked"; readonly objectId: string; readonly side: InsetDockSide }
   | { readonly type: "figureObjectSelected"; readonly objectId: string | null }
@@ -104,6 +106,8 @@ export function projectReducer(figure: Figure, action: ProjectAction): Figure {
       return resizeFigureObject(figure, action.objectId, action.bounds);
     case "roiChanged":
       return updateRoiFromStageRect(figure, action.roiId, action.stageRect);
+    case "roiDeleted":
+      return deleteRoi(figure, action.roiId);
     case "canvasSettingsChanged":
       return updateCanvasSettings(figure, action.patch);
     case "insetDocked":

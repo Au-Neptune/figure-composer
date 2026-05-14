@@ -111,7 +111,7 @@ select {
 .workspace {
   display: grid;
   flex: 1;
-  grid-template-columns: 250px minmax(0, 1fr);
+  grid-template-columns: 250px minmax(0, 1fr) 280px;
   min-height: 0;
 }
 
@@ -189,6 +189,20 @@ select {
 
 .field-row input[type="range"] {
   padding: 0;
+}
+
+.range-field {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 48px;
+  align-items: center;
+  gap: 8px;
+}
+
+.range-field output {
+  color: #1f261f;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
 }
 
 .button-grid {

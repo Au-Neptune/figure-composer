@@ -1,4 +1,4 @@
-import { Crop } from "lucide-react";
+import { Crop, Trash2 } from "lucide-react";
 import type { ReactElement } from "react";
 import type {
   CanvasSettingsPatch,
@@ -16,6 +16,7 @@ interface InspectorProps {
   readonly onCanvasSettingsChange: (patch: CanvasSettingsPatch) => void;
   readonly onDockInset: (objectId: string, side: InsetDockSide) => void;
   readonly onCreateDerivedCrop: (roiId: string) => Promise<boolean>;
+  readonly onDeleteRoi: (roiId: string) => boolean;
   readonly onSelectFigureObject: (objectId: string) => void;
   readonly onRenameSourceImage: (sourceImageId: string, name: string) => boolean;
   readonly onDeleteSourceImage: (sourceImageId: string) => boolean;
@@ -27,6 +28,7 @@ export function Inspector({
   onCanvasSettingsChange,
   onDockInset,
   onCreateDerivedCrop,
+  onDeleteRoi,
   onSelectFigureObject,
   onRenameSourceImage,
   onDeleteSourceImage,
@@ -51,18 +53,24 @@ export function Inspector({
         />
       </div>
       <InsetDockControls figure={figure} onDockInset={onDockInset} />
-      <RoiCropControls figure={figure} onCreateDerivedCrop={onCreateDerivedCrop} />
+      <RoiControls
+        figure={figure}
+        onCreateDerivedCrop={onCreateDerivedCrop}
+        onDeleteRoi={onDeleteRoi}
+      />
       {errorMessage ? <p className="error-message">{errorMessage}</p> : null}
     </aside>
   );
 }
 
-function RoiCropControls({
+function RoiControls({
   figure,
   onCreateDerivedCrop,
+  onDeleteRoi,
 }: {
   readonly figure: Figure;
   readonly onCreateDerivedCrop: (roiId: string) => Promise<boolean>;
+  readonly onDeleteRoi: (roiId: string) => boolean;
 }): ReactElement | null {
   const roi = getSelectedRoi(figure);
   if (!roi) {
@@ -71,22 +79,41 @@ function RoiCropControls({
   return (
     <div className="inspector-section">
       <h2>Region Of Interest</h2>
-      <button
-        className="small-button"
-        type="button"
-        onClick={() => {
-          void onCreateDerivedCrop(roi.id);
-        }}
-      >
-        <Crop size={15} aria-hidden="true" />
-        <span>Create Derived Source</span>
-      </button>
+      <div className="button-grid">
+        <button
+          className="small-button"
+          type="button"
+          onClick={() => {
+            void onCreateDerivedCrop(roi.id);
+          }}
+        >
+          <Crop size={15} aria-hidden="true" />
+          <span>Crop Source</span>
+        </button>
+        <button
+          className="small-button"
+          type="button"
+          onClick={() => onDeleteRoi(roi.id)}
+        >
+          <Trash2 size={15} aria-hidden="true" />
+          <span>Delete ROI</span>
+        </button>
+      </div>
     </div>
   );
 }
 
 function getSelectedRoi(figure: Figure): RegionOfInterest | null {
-  return figure.rois.find((roi) => roi.id === figure.selectedRoiId) ?? null;
+  if (figure.selectedRoiId) {
+    return figure.rois.find((roi) => roi.id === figure.selectedRoiId) ?? null;
+  }
+  const selectedObject = figure.objects.find(
+    (object) => object.id === figure.selectedObjectId,
+  );
+  if (!selectedObject || selectedObject.kind !== "inset") {
+    return null;
+  }
+  return figure.rois.find((roi) => roi.id === selectedObject.roiId) ?? null;
 }
 
 function InspectorMetric({

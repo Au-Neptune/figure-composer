@@ -22,7 +22,6 @@ interface AppToolbarProps {
   readonly canRedo: boolean;
   readonly onToolChange: (tool: ToolMode) => void;
   readonly onExportFigure: () => void;
-  readonly exportLabel: string;
 }
 
 export function AppToolbar({
@@ -132,14 +131,11 @@ function EditorToolButtons({
   );
 }
 
-function ExportButton({
-  onExportFigure,
-  exportLabel,
-}: AppToolbarProps): ReactElement {
+function ExportButton({ onExportFigure }: AppToolbarProps): ReactElement {
   return (
     <button className="tool-button" type="button" onClick={onExportFigure}>
       <Download size={18} aria-hidden="true" />
-      <span>{exportLabel}</span>
+      <span>Export</span>
     </button>
   );
 }

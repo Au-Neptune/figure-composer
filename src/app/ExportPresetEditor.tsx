@@ -12,6 +12,7 @@ import {
   MIN_JPG_QUALITY,
 } from "../editor/state/editorDefaults";
 
+const PERCENT_SCALE = 100;
 type NumberPresetField = "width" | "height" | "dpi";
 type NumericPresetField = NumberPresetField | "jpgQuality";
 
@@ -40,7 +41,9 @@ export function ExportPresetEditor({
       />
       <NumberField label="DPI" field="dpi" preset={preset} onChange={onChange} />
       <FormatField value={preset.format} onChange={onChange} />
-      <JpgQualityField preset={preset} onChange={onChange} />
+      {preset.format === "jpg" ? (
+        <JpgQualityField preset={preset} onChange={onChange} />
+      ) : null}
     </div>
   );
 }
@@ -101,14 +104,17 @@ function JpgQualityField({
   return (
     <label className="field-row">
       <span>JPG Quality</span>
-      <input
-        type="range"
-        min={MIN_JPG_QUALITY}
-        max={MAX_JPG_QUALITY}
-        step={JPG_QUALITY_STEP}
-        value={preset.jpgQuality}
-        onChange={(event) => updateNumberField("jpgQuality", event, onChange)}
-      />
+      <span className="range-field">
+        <input
+          type="range"
+          min={MIN_JPG_QUALITY}
+          max={MAX_JPG_QUALITY}
+          step={JPG_QUALITY_STEP}
+          value={preset.jpgQuality}
+          onChange={(event) => updateNumberField("jpgQuality", event, onChange)}
+        />
+        <output>{formatJpgQuality(preset.jpgQuality)}</output>
+      </span>
     </label>
   );
 }
@@ -126,4 +132,8 @@ function updateNumberField(
 
 function getNumberFieldMinimum(field: NumberPresetField): number {
   return field === "dpi" ? MIN_EXPORT_DPI : MIN_EXPORT_DIMENSION;
+}
+
+function formatJpgQuality(value: number): string {
+  return `${Math.round(value * PERCENT_SCALE)}%`;
 }

@@ -1,0 +1,6 @@
+id,task,status,acceptance_criteria,validation_command,completed_at,retry_count,notes
+1,Add ROI deletion state and UI,DONE,"Selected ROI can be deleted and linked inset/reference data remains valid","npm.cmd run test -- --run src/editor/state/projectStore.test.ts src/editor/state/roiCommands.test.ts",2026-05-14T19:07:51+08:00,0,
+2,Add canvas drag resize,DONE,"Canvas can be resized through a Konva handle without manual numeric entry only","npm.cmd run typecheck",2026-05-14T19:10:22+08:00,0,
+3,Add selected image right panel,DONE,"Right panel shows selected image metadata and can update object bounds","npm.cmd run typecheck",2026-05-14T19:14:05+08:00,0,
+4,Polish export controls,DONE,"Toolbar says Export and JPG quality displays a numeric value","npm.cmd run typecheck",2026-05-14T19:15:18+08:00,0,
+5,Run final validation,DONE,"All requested flows compile and tests/build pass","npm.cmd run test; npm.cmd run typecheck; npm.cmd run build",2026-05-14T19:16:40+08:00,0,

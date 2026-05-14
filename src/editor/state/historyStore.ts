@@ -104,6 +104,7 @@ function isUndoableProjectAction(action: ProjectAction): boolean {
     case "figureObjectMoved":
     case "figureObjectResized":
     case "roiChanged":
+    case "roiDeleted":
     case "canvasSettingsChanged":
     case "insetDocked":
     case "exportPresetChanged":
