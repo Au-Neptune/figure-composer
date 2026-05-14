@@ -30,6 +30,8 @@ export function App(): ReactElement {
           onCanvasSettingsChange={controller.handleCanvasSettingsChange}
           onDockInset={controller.handleDockInset}
           onSelectFigureObject={controller.handleSelectFigureObject}
+          onRenameSourceImage={controller.handleRenameSourceImage}
+          onDeleteSourceImage={controller.handleDeleteSourceImage}
         />
         <div className="stage-viewport">
           <FigureStage

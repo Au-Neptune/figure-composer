@@ -23,10 +23,17 @@ import {
   createInitialFigure,
 } from "./figureFactory";
 import { updateExportPreset } from "./exportPresetCommands";
+import { deleteSourceImage, renameSourceImage } from "./sourceImageCommands";
 
 export type ProjectAction =
   | { readonly type: "projectOpened"; readonly figure: Figure }
   | { readonly type: "sourceImageImported"; readonly imported: ImportedSourceImage }
+  | {
+      readonly type: "sourceImageRenamed";
+      readonly sourceImageId: string;
+      readonly name: string;
+    }
+  | { readonly type: "sourceImageDeleted"; readonly sourceImageId: string }
   | {
       readonly type: "linkedInsetCreated";
       readonly sourceObjectId: string;
@@ -65,6 +72,13 @@ export function projectReducer(figure: Figure, action: ProjectAction): Figure {
       return action.figure;
     case "sourceImageImported":
       return addSourceImageToFigure(figure, action.imported);
+    case "sourceImageRenamed":
+      return renameSourceImage(figure, {
+        sourceImageId: action.sourceImageId,
+        name: action.name,
+      });
+    case "sourceImageDeleted":
+      return deleteSourceImage(figure, action.sourceImageId);
     case "linkedInsetCreated":
       return createLinkedInsetFromStageRect(
         figure,

@@ -15,9 +15,14 @@ import {
   canUndo,
   createInitialHistory,
   historyReducer,
+  type HistoryAction,
   type HistoryState,
 } from "../editor/state/historyStore";
 import type { ProjectAction } from "../editor/state/projectStore";
+import {
+  validateSourceImageDelete,
+  validateSourceImageRename,
+} from "../editor/state/sourceImageCommands";
 import { readImageFile } from "../platform/browser/fileAdapter";
 import {
   openProjectFolder,
@@ -46,7 +51,39 @@ export interface FigureComposerController {
   readonly handleCanvasSettingsChange: (patch: CanvasSettingsPatch) => void;
   readonly handleDockInset: (objectId: string, side: InsetDockSide) => void;
   readonly handleSelectFigureObject: (objectId: string) => void;
+  readonly handleRenameSourceImage: (
+    sourceImageId: string,
+    name: string,
+  ) => boolean;
+  readonly handleDeleteSourceImage: (sourceImageId: string) => boolean;
   readonly handleExportPresetChange: (patch: ExportPresetPatch) => void;
+}
+
+type FigureComposerHandlers = Omit<
+  FigureComposerController,
+  | "figure"
+  | "exportPreset"
+  | "errorMessage"
+  | "stageRef"
+  | "undoAvailable"
+  | "redoAvailable"
+  | "exportDialogOpen"
+>;
+
+interface ControllerHandlerOptions {
+  readonly figure: Figure;
+  readonly exportPreset: ExportPreset;
+  readonly history: HistoryState;
+  readonly dispatch: Dispatch<HistoryAction>;
+  readonly setErrorMessage: (message: string | null) => void;
+  readonly setExportDialogOpen: (open: boolean) => void;
+  readonly stageRef: RefObject<Konva.Stage | null>;
+}
+
+interface SourceImageHandlerOptions {
+  readonly figure: Figure;
+  readonly dispatch: Dispatch<HistoryAction>;
+  readonly setErrorMessage: (message: string | null) => void;
 }
 
 export function useFigureComposerController(): FigureComposerController {
@@ -60,16 +97,14 @@ export function useFigureComposerController(): FigureComposerController {
   const stageRef = useRef<Konva.Stage>(null);
   const figure = history.present;
   const exportPreset = getPrimaryExportPreset(figure.exportPresets);
-  const handleUndo = () => dispatch({ type: "undoRequested" });
-  const handleRedo = () => dispatch({ type: "redoRequested" });
   const undoAvailable = canUndo(history);
   const redoAvailable = canRedo(history);
 
   useEditorShortcuts({
     canUndo: undoAvailable,
     canRedo: redoAvailable,
-    onUndo: handleUndo,
-    onRedo: handleRedo,
+    onUndo: () => dispatch({ type: "undoRequested" }),
+    onRedo: () => dispatch({ type: "redoRequested" }),
   });
 
   return {
@@ -80,12 +115,35 @@ export function useFigureComposerController(): FigureComposerController {
     undoAvailable,
     redoAvailable,
     exportDialogOpen,
+    ...createControllerHandlers({
+      figure,
+      exportPreset,
+      history,
+      dispatch,
+      setErrorMessage,
+      setExportDialogOpen,
+      stageRef,
+    }),
+  };
+}
+
+function createControllerHandlers({
+  figure,
+  exportPreset,
+  history,
+  dispatch,
+  setErrorMessage,
+  setExportDialogOpen,
+  stageRef,
+}: ControllerHandlerOptions): FigureComposerHandlers {
+  return {
     dispatchProjectAction: (action) => dispatch(action),
     handleImport: createImportHandler(dispatch, setErrorMessage),
     handleOpenProject: createOpenProjectHandler(dispatch, setErrorMessage, history),
-    handleSaveProject: () => runWithVisibleError(() => saveProjectFolder(figure), setErrorMessage),
-    handleUndo,
-    handleRedo,
+    handleSaveProject: () =>
+      runWithVisibleError(() => saveProjectFolder(figure), setErrorMessage),
+    handleUndo: () => dispatch({ type: "undoRequested" }),
+    handleRedo: () => dispatch({ type: "redoRequested" }),
     handleToolChange: (tool) => dispatch({ type: "toolChanged", tool }),
     handleOpenExportDialog: () => setExportDialogOpen(true),
     handleCloseExportDialog: () => setExportDialogOpen(false),
@@ -99,6 +157,16 @@ export function useFigureComposerController(): FigureComposerController {
       dispatch({ type: "insetDocked", objectId, side }),
     handleSelectFigureObject: (objectId) =>
       dispatch({ type: "figureObjectSelected", objectId }),
+    handleRenameSourceImage: createRenameSourceImageHandler({
+      figure,
+      dispatch,
+      setErrorMessage,
+    }),
+    handleDeleteSourceImage: createDeleteSourceImageHandler({
+      figure,
+      dispatch,
+      setErrorMessage,
+    }),
     handleExportPresetChange: (patch) =>
       dispatch({ type: "exportPresetChanged", presetId: exportPreset.id, patch }),
   };
@@ -138,6 +206,30 @@ function createOpenProjectHandler(
   };
 }
 
+function createRenameSourceImageHandler({
+  figure,
+  dispatch,
+  setErrorMessage,
+}: SourceImageHandlerOptions) {
+  return (sourceImageId: string, name: string): boolean =>
+    runWithVisibleCommand(() => {
+      validateSourceImageRename(figure, { sourceImageId, name });
+      dispatch({ type: "sourceImageRenamed", sourceImageId, name });
+    }, setErrorMessage);
+}
+
+function createDeleteSourceImageHandler({
+  figure,
+  dispatch,
+  setErrorMessage,
+}: SourceImageHandlerOptions) {
+  return (sourceImageId: string): boolean =>
+    runWithVisibleCommand(() => {
+      validateSourceImageDelete(figure, sourceImageId);
+      dispatch({ type: "sourceImageDeleted", sourceImageId });
+    }, setErrorMessage);
+}
+
 function exportFigure(stage: Konva.Stage | null, preset: ExportPreset): void {
   if (!stage) {
     throw new Error("Figure export requires a mounted Figure Stage.");
@@ -153,8 +245,25 @@ async function runWithVisibleError<T>(
     setErrorMessage(null);
     return await action();
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    setErrorMessage(message);
+    setErrorMessage(readErrorMessage(error));
     throw error;
   }
+}
+
+function runWithVisibleCommand(
+  action: () => void,
+  setErrorMessage: (message: string | null) => void,
+): boolean {
+  try {
+    setErrorMessage(null);
+    action();
+    return true;
+  } catch (error) {
+    setErrorMessage(readErrorMessage(error));
+    return false;
+  }
+}
+
+function readErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
 }

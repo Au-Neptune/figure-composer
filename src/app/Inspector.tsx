@@ -14,6 +14,8 @@ interface InspectorProps {
   readonly onCanvasSettingsChange: (patch: CanvasSettingsPatch) => void;
   readonly onDockInset: (objectId: string, side: InsetDockSide) => void;
   readonly onSelectFigureObject: (objectId: string) => void;
+  readonly onRenameSourceImage: (sourceImageId: string, name: string) => boolean;
+  readonly onDeleteSourceImage: (sourceImageId: string) => boolean;
 }
 
 export function Inspector({
@@ -22,6 +24,8 @@ export function Inspector({
   onCanvasSettingsChange,
   onDockInset,
   onSelectFigureObject,
+  onRenameSourceImage,
+  onDeleteSourceImage,
 }: InspectorProps): ReactElement {
   const insetCount = figure.objects.filter((object) => object.kind === "inset").length;
   return (
@@ -32,6 +36,8 @@ export function Inspector({
       <SourceImageList
         figure={figure}
         onSelectFigureObject={onSelectFigureObject}
+        onRenameSourceImage={onRenameSourceImage}
+        onDeleteSourceImage={onDeleteSourceImage}
       />
       <div className="inspector-section">
         <h2>Figure Layout</h2>

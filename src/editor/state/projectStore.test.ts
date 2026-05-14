@@ -13,7 +13,7 @@ const IMPORTED_SOURCE_IMAGE: ImportedSourceImage = {
 describe("projectReducer", () => {
   it("adds an imported source image and selects its canvas object", () => {
     const figure = createFigureWithSourceImage();
-    const sourceImage = figure.sourceImages[0];
+    const sourceImage = getOnlySourceImage(figure);
     const sourceObject = getOnlySourceObject(figure);
 
     expect(sourceImage).toMatchObject({
@@ -26,6 +26,61 @@ describe("projectReducer", () => {
     expect(sourceObject.sourceImageId).toBe(sourceImage?.id);
     expect(figure.selectedObjectId).toBe(sourceObject.id);
     expect(figure.tool).toBe("select");
+  });
+
+  it("renames a source image without changing object references", () => {
+    const figure = createFigureWithSourceImage();
+    const sourceImage = getOnlySourceImage(figure);
+    const sourceObject = getOnlySourceObject(figure);
+    const renamed = projectReducer(figure, {
+      type: "sourceImageRenamed",
+      sourceImageId: sourceImage.id,
+      name: "  renamed-cells.tif  ",
+    });
+
+    expect(getOnlySourceImage(renamed).name).toBe("renamed-cells.tif");
+    expect(getOnlySourceObject(renamed)).toMatchObject({
+      id: sourceObject.id,
+      sourceImageId: sourceImage.id,
+    });
+  });
+
+  it("rejects an empty source image rename", () => {
+    const figure = createFigureWithSourceImage();
+    const sourceImage = getOnlySourceImage(figure);
+
+    expect(() =>
+      projectReducer(figure, {
+        type: "sourceImageRenamed",
+        sourceImageId: sourceImage.id,
+        name: "   ",
+      }),
+    ).toThrow("Source Image name cannot be empty.");
+  });
+
+  it("deletes an unreferenced source image and its canvas object", () => {
+    const figure = createFigureWithSourceImage();
+    const sourceImage = getOnlySourceImage(figure);
+    const deleted = projectReducer(figure, {
+      type: "sourceImageDeleted",
+      sourceImageId: sourceImage.id,
+    });
+
+    expect(deleted.sourceImages).toHaveLength(0);
+    expect(deleted.objects).toHaveLength(0);
+    expect(deleted.selectedObjectId).toBeNull();
+  });
+
+  it("blocks deletion when a source image is referenced by ROI or inset data", () => {
+    const figure = createFigureWithLinkedInset();
+    const sourceImage = getOnlySourceImage(figure);
+
+    expect(() =>
+      projectReducer(figure, {
+        type: "sourceImageDeleted",
+        sourceImageId: sourceImage.id,
+      }),
+    ).toThrow(`Cannot delete Source Image "${sourceImage.name}"`);
   });
 
   it("keeps moved and resized objects inside the figure canvas", () => {
@@ -92,6 +147,29 @@ function createFigureWithSourceImage(): Figure {
     type: "sourceImageImported",
     imported: IMPORTED_SOURCE_IMAGE,
   });
+}
+
+function createFigureWithLinkedInset(): Figure {
+  const figure = createFigureWithSourceImage();
+  const sourceObject = getOnlySourceObject(figure);
+  return projectReducer(figure, {
+    type: "linkedInsetCreated",
+    sourceObjectId: sourceObject.id,
+    stageRect: {
+      x: sourceObject.x,
+      y: sourceObject.y,
+      width: 120,
+      height: 80,
+    },
+  });
+}
+
+function getOnlySourceImage(figure: Figure) {
+  const sourceImage = figure.sourceImages[0];
+  if (!sourceImage) {
+    throw new Error("Expected a Source Image in the test Figure.");
+  }
+  return sourceImage;
 }
 
 function getOnlySourceObject(figure: Figure): SourceImageObject {
