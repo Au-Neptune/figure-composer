@@ -1,12 +1,15 @@
+import { useState } from "react";
 import type { Dispatch, ReactElement, RefObject } from "react";
 import type Konva from "konva";
 import { Layer, Rect, Stage } from "react-konva";
 import type { Figure } from "../model/figure";
 import { hasRenderableArea, normalizeRect } from "../model/geometry";
+import type { PlacementGuide } from "../model/placementSnapping";
 import type { ProjectAction } from "../state/projectStore";
 import type { DraftRoi } from "../tools/useRoiDraftTool";
 import { useRoiDraftTool } from "../tools/useRoiDraftTool";
 import { ObjectRenderer } from "./ObjectRenderer";
+import { PlacementGuideOverlay } from "./PlacementGuideOverlay";
 import { RoiFrameRenderer } from "./RoiFrameRenderer";
 
 interface FigureStageProps {
@@ -21,6 +24,7 @@ export function FigureStage({
   dispatch,
 }: FigureStageProps): ReactElement {
   const roiDraftTool = useRoiDraftTool({ figure, stageRef, dispatch });
+  const [placementGuides, setPlacementGuides] = useState<readonly PlacementGuide[]>([]);
 
   return (
     <Stage
@@ -38,6 +42,8 @@ export function FigureStage({
         figure={figure}
         dispatch={dispatch}
         draftRoi={roiDraftTool.draftRoi}
+        placementGuides={placementGuides}
+        onPlacementGuidesChange={setPlacementGuides}
       />
     </Stage>
   );
@@ -47,10 +53,14 @@ function FigureLayer({
   figure,
   dispatch,
   draftRoi,
+  placementGuides,
+  onPlacementGuidesChange,
 }: {
   readonly figure: Figure;
   readonly dispatch: Dispatch<ProjectAction>;
   readonly draftRoi: DraftRoi | null;
+  readonly placementGuides: readonly PlacementGuide[];
+  readonly onPlacementGuidesChange: (guides: readonly PlacementGuide[]) => void;
 }): ReactElement {
   return (
     <Layer>
@@ -68,6 +78,7 @@ function FigureLayer({
           figure={figure}
           object={object}
           dispatch={dispatch}
+          onPlacementGuidesChange={onPlacementGuidesChange}
         />
       ))}
       {figure.rois.map((roi) => (
@@ -79,6 +90,7 @@ function FigureLayer({
         />
       ))}
       <DraftRoiRect draftRoi={draftRoi} />
+      <PlacementGuideOverlay canvas={figure.canvas} guides={placementGuides} />
     </Layer>
   );
 }

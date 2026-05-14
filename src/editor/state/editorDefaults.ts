@@ -13,6 +13,7 @@ export const DEFAULT_INSET_WIDTH = 240;
 export const DEFAULT_INSET_GAP = 32;
 export const MIN_ROI_SIDE_PX = 4;
 export const MIN_OBJECT_SIDE_PX = 24;
+export const SNAP_GUIDE_THRESHOLD_PX = 8;
 export const ROI_FRAME_STROKE = "#e11d48";
 export const ROI_FRAME_STROKE_WIDTH = 3;
 export const MIN_EXPORT_DIMENSION = 1;
@@ -20,4 +21,3 @@ export const MIN_EXPORT_DPI = 1;
 export const MIN_JPG_QUALITY = 0.1;
 export const MAX_JPG_QUALITY = 1;
 export const JPG_QUALITY_STEP = 0.01;
-
