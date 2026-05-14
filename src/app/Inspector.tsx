@@ -1,9 +1,11 @@
+import { Crop } from "lucide-react";
 import type { ReactElement } from "react";
 import type {
   CanvasSettingsPatch,
   Figure,
   InsetDockSide,
 } from "../editor/model/figure";
+import type { RegionOfInterest } from "../editor/model/roi";
 import { FigureLayoutEditor } from "./FigureLayoutEditor";
 import { InsetDockControls } from "./InsetDockControls";
 import { SourceImageList } from "./SourceImageList";
@@ -13,6 +15,7 @@ interface InspectorProps {
   readonly errorMessage: string | null;
   readonly onCanvasSettingsChange: (patch: CanvasSettingsPatch) => void;
   readonly onDockInset: (objectId: string, side: InsetDockSide) => void;
+  readonly onCreateDerivedCrop: (roiId: string) => Promise<boolean>;
   readonly onSelectFigureObject: (objectId: string) => void;
   readonly onRenameSourceImage: (sourceImageId: string, name: string) => boolean;
   readonly onDeleteSourceImage: (sourceImageId: string) => boolean;
@@ -23,6 +26,7 @@ export function Inspector({
   errorMessage,
   onCanvasSettingsChange,
   onDockInset,
+  onCreateDerivedCrop,
   onSelectFigureObject,
   onRenameSourceImage,
   onDeleteSourceImage,
@@ -47,9 +51,42 @@ export function Inspector({
         />
       </div>
       <InsetDockControls figure={figure} onDockInset={onDockInset} />
+      <RoiCropControls figure={figure} onCreateDerivedCrop={onCreateDerivedCrop} />
       {errorMessage ? <p className="error-message">{errorMessage}</p> : null}
     </aside>
   );
+}
+
+function RoiCropControls({
+  figure,
+  onCreateDerivedCrop,
+}: {
+  readonly figure: Figure;
+  readonly onCreateDerivedCrop: (roiId: string) => Promise<boolean>;
+}): ReactElement | null {
+  const roi = getSelectedRoi(figure);
+  if (!roi) {
+    return null;
+  }
+  return (
+    <div className="inspector-section">
+      <h2>Region Of Interest</h2>
+      <button
+        className="small-button"
+        type="button"
+        onClick={() => {
+          void onCreateDerivedCrop(roi.id);
+        }}
+      >
+        <Crop size={15} aria-hidden="true" />
+        <span>Create Derived Source</span>
+      </button>
+    </div>
+  );
+}
+
+function getSelectedRoi(figure: Figure): RegionOfInterest | null {
+  return figure.rois.find((roi) => roi.id === figure.selectedRoiId) ?? null;
 }
 
 function InspectorMetric({

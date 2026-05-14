@@ -1,7 +1,12 @@
 import type { ExportPreset } from "../model/exportPreset";
 import type { Figure, SourceImageObject } from "../model/figure";
 import { fitWithin } from "../model/geometry";
-import type { ImportedSourceImage, SourceImage } from "../model/sourceImage";
+import type {
+  DerivedSourceImageInput,
+  ImportedSourceImage,
+  SourceImage,
+  SourceImageLineage,
+} from "../model/sourceImage";
 import { createAssetFileName } from "../project/assetNames";
 import {
   DEFAULT_CANVAS_BACKGROUND,
@@ -40,15 +45,37 @@ export function addSourceImageToFigure(
   figure: Figure,
   imported: ImportedSourceImage,
 ): Figure {
+  return addSourceImageAssetToFigure(figure, {
+    ...imported,
+    lineage: { kind: "imported" },
+  });
+}
+
+export function addDerivedSourceImageToFigure(
+  figure: Figure,
+  derived: DerivedSourceImageInput,
+): Figure {
+  return addSourceImageAssetToFigure(figure, derived);
+}
+
+interface SourceImageAssetInput extends ImportedSourceImage {
+  readonly lineage: SourceImageLineage;
+}
+
+function addSourceImageAssetToFigure(
+  figure: Figure,
+  input: SourceImageAssetInput,
+): Figure {
   const id = createId("source");
   const sourceImage: SourceImage = {
     id,
-    name: imported.name,
-    assetUrl: imported.assetUrl,
-    assetFileName: createAssetFileName(id, imported.name),
-    width: imported.width,
-    height: imported.height,
+    name: input.name,
+    assetUrl: input.assetUrl,
+    assetFileName: createAssetFileName(id, input.name),
+    width: input.width,
+    height: input.height,
     referencedBy: [],
+    lineage: input.lineage,
   };
   const object = createSourceImageObject(sourceImage, figure.objects.length);
   return {
@@ -92,4 +119,3 @@ function createSourceImageObject(
     height: fitted.height,
   };
 }
-

@@ -6,7 +6,10 @@ import type {
   ToolMode,
 } from "../model/figure";
 import type { Rect } from "../model/geometry";
-import type { ImportedSourceImage } from "../model/sourceImage";
+import type {
+  DerivedSourceImageInput,
+  ImportedSourceImage,
+} from "../model/sourceImage";
 import {
   createLinkedInsetFromStageRect,
   dockInsetObject,
@@ -19,6 +22,7 @@ import {
   updateRoiFromStageRect,
 } from "./figureCommands";
 import {
+  addDerivedSourceImageToFigure,
   addSourceImageToFigure,
   createInitialFigure,
 } from "./figureFactory";
@@ -28,6 +32,10 @@ import { deleteSourceImage, renameSourceImage } from "./sourceImageCommands";
 export type ProjectAction =
   | { readonly type: "projectOpened"; readonly figure: Figure }
   | { readonly type: "sourceImageImported"; readonly imported: ImportedSourceImage }
+  | {
+      readonly type: "derivedSourceImageCreated";
+      readonly derived: DerivedSourceImageInput;
+    }
   | {
       readonly type: "sourceImageRenamed";
       readonly sourceImageId: string;
@@ -72,6 +80,8 @@ export function projectReducer(figure: Figure, action: ProjectAction): Figure {
       return action.figure;
     case "sourceImageImported":
       return addSourceImageToFigure(figure, action.imported);
+    case "derivedSourceImageCreated":
+      return addDerivedSourceImageToFigure(figure, action.derived);
     case "sourceImageRenamed":
       return renameSourceImage(figure, {
         sourceImageId: action.sourceImageId,

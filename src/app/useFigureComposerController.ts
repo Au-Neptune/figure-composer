@@ -9,6 +9,7 @@ import type {
   InsetDockSide,
   ToolMode,
 } from "../editor/model/figure";
+import { getRoi, getSourceImage } from "../editor/model/selectors";
 import { revokeHistoryAssetUrls } from "../editor/project/assetUrls";
 import {
   canRedo,
@@ -28,7 +29,13 @@ import {
   openProjectFolder,
   saveProjectFolder,
 } from "../platform/browser/projectFolderAdapter";
+import { createDerivedSourceCrop } from "../platform/browser/derivedSourceCrop";
 import { useEditorShortcuts } from "./useEditorShortcuts";
+import {
+  runWithVisibleAsyncCommand,
+  runWithVisibleCommand,
+  runWithVisibleError,
+} from "./visibleErrors";
 
 export interface FigureComposerController {
   readonly figure: Figure;
@@ -51,6 +58,7 @@ export interface FigureComposerController {
   readonly handleCanvasSettingsChange: (patch: CanvasSettingsPatch) => void;
   readonly handleDockInset: (objectId: string, side: InsetDockSide) => void;
   readonly handleSelectFigureObject: (objectId: string) => void;
+  readonly handleCreateDerivedCrop: (roiId: string) => Promise<boolean>;
   readonly handleRenameSourceImage: (
     sourceImageId: string,
     name: string,
@@ -157,6 +165,11 @@ function createControllerHandlers({
       dispatch({ type: "insetDocked", objectId, side }),
     handleSelectFigureObject: (objectId) =>
       dispatch({ type: "figureObjectSelected", objectId }),
+    handleCreateDerivedCrop: createDerivedCropHandler({
+      figure,
+      dispatch,
+      setErrorMessage,
+    }),
     handleRenameSourceImage: createRenameSourceImageHandler({
       figure,
       dispatch,
@@ -230,40 +243,23 @@ function createDeleteSourceImageHandler({
     }, setErrorMessage);
 }
 
+function createDerivedCropHandler({
+  figure,
+  dispatch,
+  setErrorMessage,
+}: SourceImageHandlerOptions) {
+  return (roiId: string): Promise<boolean> =>
+    runWithVisibleAsyncCommand(async () => {
+      const roi = getRoi(figure, roiId);
+      const sourceImage = getSourceImage(figure, roi.sourceImageId);
+      const derived = await createDerivedSourceCrop({ sourceImage, roi });
+      dispatch({ type: "derivedSourceImageCreated", derived });
+    }, setErrorMessage);
+}
+
 function exportFigure(stage: Konva.Stage | null, preset: ExportPreset): void {
   if (!stage) {
     throw new Error("Figure export requires a mounted Figure Stage.");
   }
   exportStageAsFigure(stage, { fileBasename: "figure-composer-export", preset });
-}
-
-async function runWithVisibleError<T>(
-  action: () => Promise<T>,
-  setErrorMessage: (message: string | null) => void,
-): Promise<T> {
-  try {
-    setErrorMessage(null);
-    return await action();
-  } catch (error) {
-    setErrorMessage(readErrorMessage(error));
-    throw error;
-  }
-}
-
-function runWithVisibleCommand(
-  action: () => void,
-  setErrorMessage: (message: string | null) => void,
-): boolean {
-  try {
-    setErrorMessage(null);
-    action();
-    return true;
-  } catch (error) {
-    setErrorMessage(readErrorMessage(error));
-    return false;
-  }
-}
-
-function readErrorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
 }

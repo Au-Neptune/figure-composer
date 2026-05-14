@@ -1,3 +1,20 @@
+import type { Rect } from "./geometry";
+
+export type SourceImageLineage =
+  | ImportedSourceImageLineage
+  | DerivedSourceImageLineage;
+
+export interface ImportedSourceImageLineage {
+  readonly kind: "imported";
+}
+
+export interface DerivedSourceImageLineage {
+  readonly kind: "derived";
+  readonly parentSourceImageId: string;
+  readonly roiId: string;
+  readonly cropRect: Rect;
+}
+
 export interface SourceImage {
   readonly id: string;
   readonly name: string;
@@ -6,6 +23,7 @@ export interface SourceImage {
   readonly width: number;
   readonly height: number;
   readonly referencedBy: readonly string[];
+  readonly lineage: SourceImageLineage;
 }
 
 export interface ImportedSourceImage {
@@ -13,4 +31,8 @@ export interface ImportedSourceImage {
   readonly assetUrl: string;
   readonly width: number;
   readonly height: number;
+}
+
+export interface DerivedSourceImageInput extends ImportedSourceImage {
+  readonly lineage: DerivedSourceImageLineage;
 }

@@ -63,6 +63,7 @@ function serializeSourceImage(sourceImage: SourceImage): SerializedSourceImage {
     width: sourceImage.width,
     height: sourceImage.height,
     referencedBy: sourceImage.referencedBy,
+    lineage: sourceImage.lineage,
   };
 }
 
@@ -76,4 +77,3 @@ function hydrateSourceImage(
   }
   return { ...sourceImage, assetUrl };
 }
-

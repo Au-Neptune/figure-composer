@@ -1,0 +1,6 @@
+id,task,status,acceptance_criteria,validation_command,completed_at,retry_count,notes
+1,Inspect ROI source and project flow,DONE,Current ROI source image JSON image loading and UI action surfaces are understood,git -c safe.directory="D:/code/Figure Composer" status --short,2026-05-14T18:36:27+08:00,0,"ROI source image JSON asset and UI action flow inspected"
+2,Add source image lineage and JSON support,DONE,Imported and derived source lineage serializes hydrates and validates with tests,npm.cmd run test,2026-05-14T18:37:53+08:00,0,"SourceImage lineage model JSON serialization validation and compatibility tests added"
+3,Add crop creation workflow,DONE,Crop helper creates a new derived source asset without mutating the original source,npm.cmd run test,2026-05-14T18:40:16+08:00,0,"Derived source reducer workflow and browser crop helper added"
+4,Wire crop action into UI,DONE,User can create a Derived Source Image from an existing ROI with explicit errors,npm.cmd run typecheck,2026-05-14T18:41:43+08:00,1,"Selected ROI crop action wired after correcting RegionOfInterest import"
+5,Validate and close child task,DONE,All checks pass and taskmaster artifacts are updated,npm.cmd run build,2026-05-14T18:43:43+08:00,0,"test typecheck build diff-check file-size function-span and HTTP checks passed"

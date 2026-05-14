@@ -29,6 +29,7 @@ export function App(): ReactElement {
           errorMessage={controller.errorMessage}
           onCanvasSettingsChange={controller.handleCanvasSettingsChange}
           onDockInset={controller.handleDockInset}
+          onCreateDerivedCrop={controller.handleCreateDerivedCrop}
           onSelectFigureObject={controller.handleSelectFigureObject}
           onRenameSourceImage={controller.handleRenameSourceImage}
           onDeleteSourceImage={controller.handleDeleteSourceImage}

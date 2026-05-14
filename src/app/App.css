@@ -198,7 +198,11 @@ select {
 }
 
 .small-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-height: 32px;
+  gap: 6px;
   border: 1px solid #b9c4b2;
   border-radius: 6px;
   background: #ffffff;

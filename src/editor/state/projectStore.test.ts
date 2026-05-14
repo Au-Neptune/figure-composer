@@ -83,6 +83,40 @@ describe("projectReducer", () => {
     ).toThrow(`Cannot delete Source Image "${sourceImage.name}"`);
   });
 
+  it("adds a derived source image without mutating its parent source", () => {
+    const figure = createFigureWithLinkedInset();
+    const parent = getOnlySourceImage(figure);
+    const roi = getOnlyRoi(figure);
+    const updated = projectReducer(figure, {
+      type: "derivedSourceImageCreated",
+      derived: {
+        name: "cells crop.png",
+        assetUrl: "blob:derived-crop",
+        width: 120,
+        height: 80,
+        lineage: {
+          kind: "derived",
+          parentSourceImageId: parent.id,
+          roiId: roi.id,
+          cropRect: roi.rect,
+        },
+      },
+    });
+    const derived = updated.sourceImages.find((item) => item.id !== parent.id);
+    const derivedObject = updated.objects.find(
+      (item) => item.kind === "sourceImage" && item.sourceImageId === derived?.id,
+    );
+
+    expect(updated.sourceImages[0]).toEqual(parent);
+    expect(derived?.lineage).toEqual({
+      kind: "derived",
+      parentSourceImageId: parent.id,
+      roiId: roi.id,
+      cropRect: roi.rect,
+    });
+    expect(derivedObject?.id).toBe(updated.selectedObjectId);
+  });
+
   it("updates export output size without changing Figure Layout", () => {
     const figure = createInitialProject();
     const preset = getOnlyExportPreset(figure);
@@ -209,6 +243,14 @@ function getOnlySourceObject(figure: Figure): SourceImageObject {
     throw new Error("Expected a Source Image object in the test Figure.");
   }
   return object;
+}
+
+function getOnlyRoi(figure: Figure) {
+  const roi = figure.rois[0];
+  if (!roi) {
+    throw new Error("Expected a ROI in the test Figure.");
+  }
+  return roi;
 }
 
 function getOnlyExportPreset(figure: Figure) {

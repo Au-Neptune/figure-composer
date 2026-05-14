@@ -21,15 +21,15 @@
 > If resuming after compaction, session restart, or context loss, read this
 > section first.
 
-- **Current milestone**: #4 Implement derived source image crop
+- **Current milestone**: #5 Harden MVP validation and smoke coverage
 - **Current status**: WAITING_SUBTASK
-- **Last completed**: #3 Build export preview workflow
+- **Last completed**: #4 Implement derived source image crop
 - **Current artifact**: `SUBTASKS.csv`
 - **Key context**: The MVP vertical slice exists and is pushed. The next work
   should improve editing ergonomics before expanding image operations.
 - **Known issues**: None blocking. Vite build reports a chunk size warning.
-- **Next action**: Create `tasks/20260514-derived-crop/` as a Full Single child
-  task and begin row #4 from `SUBTASKS.csv`.
+- **Next action**: Create `tasks/20260514-mvp-validation/` as a Full Single
+  child task and begin row #5 from `SUBTASKS.csv`.
 
 > Update this block every time a child deliverable changes status.
 
@@ -194,3 +194,56 @@
   - `src/app/ExportPresetEditor.tsx`
   - `src/editor/state/projectStore.test.ts`
 - **Next step**: Child #4 Implement derived source image crop.
+
+---
+
+## Child #4 Started: Implement derived source image crop
+
+- **Status**: IN_PROGRESS
+- **Started**: 18:33
+- **What was done**:
+  - Marked `SUBTASKS.csv` row #4 as `IN_PROGRESS`.
+  - Created Full Single child task artifacts under
+    `tasks/20260514-derived-crop/`.
+- **Validation**: Pending child task validation.
+- **Next step**: Read child `TODO.csv` and inspect ROI/source model, project
+  JSON serialization, image loading, and UI action surfaces.
+
+---
+
+## Child #4 Completed: Implement derived source image crop
+
+- **Status**: DONE
+- **Completed**: 18:43
+- **What was done**:
+  - Added Source Image lineage for imported and derived sources.
+  - Added project JSON serialization, hydration, validation, and legacy
+    compatibility for lineage.
+  - Added browser crop asset helper for creating Derived Source Image PNG object
+    URLs from ROI data.
+  - Added reducer workflow and undoable history action for derived sources.
+  - Added selected ROI crop action in the Inspector.
+  - Extracted visible error helpers to keep controller size under limits.
+- **Validation**:
+  - `npm.cmd run test` -> exit 0, 5 files / 27 tests passed.
+  - `npm.cmd run typecheck` -> exit 0.
+  - `npm.cmd run build` -> exit 0 with Vite chunk size warning.
+  - `git -c safe.directory="D:/code/Figure Composer" -c core.quotepath=false diff --check` -> exit 0.
+  - Source file size and function span checks passed.
+  - `Invoke-WebRequest http://127.0.0.1:5173/` -> HTTP 200.
+- **Files changed**:
+  - `src/editor/model/sourceImage.ts`
+  - `src/editor/state/figureFactory.ts`
+  - `src/editor/state/projectStore.ts`
+  - `src/editor/state/historyStore.ts`
+  - `src/editor/project/projectJson.ts`
+  - `src/editor/project/projectJsonValidation.ts`
+  - `src/editor/project/projectJson.test.ts`
+  - `src/editor/state/projectStore.test.ts`
+  - `src/platform/browser/derivedSourceCrop.ts`
+  - `src/app/useFigureComposerController.ts`
+  - `src/app/visibleErrors.ts`
+  - `src/app/App.tsx`
+  - `src/app/Inspector.tsx`
+  - `src/app/App.css`
+- **Next step**: Child #5 Harden MVP validation and smoke coverage.
