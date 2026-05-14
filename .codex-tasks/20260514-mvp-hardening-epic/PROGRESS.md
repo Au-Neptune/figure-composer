@@ -21,15 +21,15 @@
 > If resuming after compaction, session restart, or context loss, read this
 > section first.
 
-- **Current milestone**: #3 Build export preview workflow
+- **Current milestone**: #4 Implement derived source image crop
 - **Current status**: WAITING_SUBTASK
-- **Last completed**: #2 Add source image management actions
+- **Last completed**: #3 Build export preview workflow
 - **Current artifact**: `SUBTASKS.csv`
 - **Key context**: The MVP vertical slice exists and is pushed. The next work
   should improve editing ergonomics before expanding image operations.
 - **Known issues**: None blocking. Vite build reports a chunk size warning.
-- **Next action**: Create `tasks/20260514-export-preview/` as a Full Single
-  child task and begin row #3 from `SUBTASKS.csv`.
+- **Next action**: Create `tasks/20260514-derived-crop/` as a Full Single child
+  task and begin row #4 from `SUBTASKS.csv`.
 
 > Update this block every time a child deliverable changes status.
 
@@ -148,3 +148,49 @@
   - `src/app/SourceImageList.tsx`
   - `src/app/SourceImageList.css`
 - **Next step**: Child #3 Build export preview workflow.
+
+---
+
+## Child #3 Started: Build export preview workflow
+
+- **Status**: IN_PROGRESS
+- **Started**: 18:22
+- **What was done**:
+  - Marked `SUBTASKS.csv` row #3 as `IN_PROGRESS`.
+  - Created Full Single child task artifacts under
+    `tasks/20260514-export-preview/`.
+- **Validation**: Pending child task validation.
+- **Next step**: Read child `TODO.csv` and inspect export preset model, export
+  dialog UI, renderer/export code, and current tests.
+
+---
+
+## Child #3 Completed: Build export preview workflow
+
+- **Status**: DONE
+- **Completed**: 18:32
+- **What was done**:
+  - Added export preview metric helpers and tests.
+  - Added Export Preview rendering for Source Images, Insets, and ROI frames.
+  - Added Output Size and Final Pixels summary to the export dialog.
+  - Added Output Width and Output Height controls to the Export Preset editor.
+  - Updated export rendering to use the same final pixel dimensions shown in
+    the dialog.
+  - Added reducer coverage for Export Preset and Figure Layout separation.
+- **Validation**:
+  - `npm.cmd run test` -> exit 0, 5 files / 24 tests passed.
+  - `npm.cmd run typecheck` -> exit 0.
+  - `npm.cmd run build` -> exit 0 with Vite chunk size warning.
+  - `git -c safe.directory="D:/code/Figure Composer" -c core.quotepath=false diff --check` -> exit 0.
+  - Source file size and function span checks passed.
+  - `Invoke-WebRequest http://127.0.0.1:5173/` -> HTTP 200.
+- **Files changed**:
+  - `src/editor/export/exportPreview.ts`
+  - `src/editor/export/exportPreview.test.ts`
+  - `src/editor/export/exportFigure.ts`
+  - `src/app/ExportPreview.tsx`
+  - `src/app/ExportDialog.tsx`
+  - `src/app/ExportDialog.css`
+  - `src/app/ExportPresetEditor.tsx`
+  - `src/editor/state/projectStore.test.ts`
+- **Next step**: Child #4 Implement derived source image crop.

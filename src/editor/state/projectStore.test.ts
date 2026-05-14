@@ -83,6 +83,37 @@ describe("projectReducer", () => {
     ).toThrow(`Cannot delete Source Image "${sourceImage.name}"`);
   });
 
+  it("updates export output size without changing Figure Layout", () => {
+    const figure = createInitialProject();
+    const preset = getOnlyExportPreset(figure);
+    const updated = projectReducer(figure, {
+      type: "exportPresetChanged",
+      presetId: preset.id,
+      patch: { width: 640, height: 480 },
+    });
+
+    expect(updated.canvas).toEqual(figure.canvas);
+    expect(getOnlyExportPreset(updated)).toMatchObject({
+      width: 640,
+      height: 480,
+    });
+  });
+
+  it("updates Figure Layout without changing export output size", () => {
+    const figure = createInitialProject();
+    const preset = getOnlyExportPreset(figure);
+    const updated = projectReducer(figure, {
+      type: "canvasSettingsChanged",
+      patch: { width: 900, height: 700 },
+    });
+
+    expect(updated.canvas).toMatchObject({ width: 900, height: 700 });
+    expect(getOnlyExportPreset(updated)).toMatchObject({
+      width: preset.width,
+      height: preset.height,
+    });
+  });
+
   it("keeps moved and resized objects inside the figure canvas", () => {
     const figure = createFigureWithSourceImage();
     const sourceObject = getOnlySourceObject(figure);
@@ -178,4 +209,12 @@ function getOnlySourceObject(figure: Figure): SourceImageObject {
     throw new Error("Expected a Source Image object in the test Figure.");
   }
   return object;
+}
+
+function getOnlyExportPreset(figure: Figure) {
+  const preset = figure.exportPresets[0];
+  if (!preset) {
+    throw new Error("Expected an Export Preset in the test Figure.");
+  }
+  return preset;
 }
