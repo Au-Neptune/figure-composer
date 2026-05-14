@@ -1,0 +1,204 @@
+# Figure Composer Software Design Document
+
+## Purpose
+
+Figure Composer is a desktop-first tool for composing publication- and report-ready figures from source images, linked insets, ROI frames, annotations, and export presets.
+
+The product is focused on **Figure** composition, not general photo editing or scientific image analysis. Image operations exist only when they support figure composition, layout, and output.
+
+## Goals
+
+- Compose a report- or paper-ready **Figure** from one or more **Source Images**.
+- Create a **Region Of Interest** on a **Source Image** and generate a linked **Inset**.
+- Show a default red **ROI Frame** on the source image when an inset is created.
+- Let users freely arrange source images, insets, and annotations on a WYSIWYG canvas.
+- Export the current figure using reusable **Export Presets**.
+- Save and reopen work as a portable **Project** package.
+
+## Non-Goals For MVP
+
+- Scientific image analysis such as thresholding, measurement analysis, channel analysis, or ImageJ/Fiji-style workflows.
+- Photoshop-style retouching, brush editing, object removal, or filter-heavy photo editing.
+- Full panel automation, including automatic panel ordering and relabeling.
+- Scale Bar implementation, even though **Scale Bar** is a core domain concept.
+- TIFF, PDF, SVG, or PowerPoint export.
+- Single-file packed project format.
+- Export artifact history.
+
+## Domain Model
+
+The canonical domain language is defined in [CONTEXT.md](../CONTEXT.md).
+
+Key concepts:
+
+- **Project**: A portable package containing one **Figure** and its required source assets.
+- **Figure**: The primary composed artifact intended for a paper, report, presentation, or poster.
+- **Source Image**: Imported image material used inside a figure.
+- **Referenced Source Image**: A source image that is used by a ROI, inset, or scale bar and can no longer be directly modified.
+- **Derived Source Image**: A new source image created from a figure-safe image operation.
+- **Region Of Interest**: A selected area on a source image that drives a linked inset.
+- **ROI Frame**: A visible annotation marking a ROI, created by default when an inset is created.
+- **Inset**: A linked visual element showing a magnified or cropped ROI.
+- **Export Preset**: Reusable output settings for exporting a figure.
+- **Figure Preview**: The WYSIWYG editing canvas.
+- **Export Preview**: A pre-export view for checking output settings.
+
+## Confirmed Product Decisions
+
+- The core artifact is a **Figure**, not a generic image or collage.
+- A **Project** contains exactly one **Figure**.
+- A **Project** is a folder package, not loose external references and not a single packed file for MVP.
+- A **Figure** may contain multiple **Source Images**.
+- The MVP supports multiple source images with free layout, but not full panel automation.
+- **Inset** is linked to its **Region Of Interest** by default.
+- Creating an inset automatically creates a default visible red **ROI Frame**.
+- ROI semantics and ROI visual frame are separate concepts.
+- Inset sizing uses display size by default.
+- Inset magnification exists as a precision concept, but display size is the default user workflow.
+- **Source Image** may be directly modified only before it is referenced.
+- Once a source image is referenced by ROI, inset, or scale bar, direct modification is blocked.
+- Further edits to a referenced source image produce a **Derived Source Image**.
+- **Scale Bar** is a core concept, but not part of the MVP implementation.
+- **Export Preset** is stored in the project.
+- Exported output files are not tracked as project history.
+- The editor uses a WYSIWYG **Figure Preview**.
+- A separate **Export Preview** appears before export.
+- **Image Operations** are limited to figure-safe operations.
+
+## MVP Scope
+
+The first vertical slice is:
+
+1. Import a **Source Image**.
+2. Display the source image on the WYSIWYG figure canvas.
+3. Create a **Region Of Interest** on the source image.
+4. Automatically create a default red **ROI Frame**.
+5. Generate a linked **Inset** from the ROI.
+6. Keep the inset updated when the ROI changes.
+7. Arrange the inset freely on the canvas.
+8. Export the figure as PNG.
+
+The MVP should then expand to:
+
+- Multiple source images on the same figure canvas.
+- Basic object movement and resizing.
+- JPG export.
+- Export presets for canvas size, DPI, format, background, and JPG quality.
+- Project save/load using folder packages.
+- Core undo/redo for editing operations.
+
+## MVP Image Operations
+
+MVP image operations are limited to:
+
+- Crop.
+- Resize.
+- Rotate 90, 180, or 270 degrees.
+- Format conversion through export.
+- Canvas size and DPI through export presets.
+
+Deferred image operations:
+
+- Brightness and contrast.
+- Grayscale conversion.
+- Transparent background processing.
+- Arbitrary rotation.
+- Trim whitespace.
+- Advanced compression controls beyond basic JPG quality.
+
+## MVP Export
+
+Supported in MVP:
+
+- PNG.
+- JPG.
+
+Deferred:
+
+- TIFF.
+- PDF.
+- SVG.
+- PowerPoint.
+
+## Architecture
+
+The MVP uses:
+
+- React for UI composition.
+- TypeScript for type safety.
+- Konva for the interactive WYSIWYG canvas.
+- Tauri for desktop packaging and local file access.
+- A browser development server for fast editor iteration.
+
+Tauri-specific behavior must stay behind adapters. The figure editor should remain runnable in a browser development server without depending directly on Tauri APIs.
+
+Architecture decision records:
+
+- [ADR 0001: Use React, TypeScript, Konva, and Tauri for the MVP](./adr/0001-react-typescript-konva-tauri.md)
+- [ADR 0002: Use a folder package for MVP projects](./adr/0002-folder-package-project-format.md)
+
+## Proposed Module Boundaries
+
+```txt
+src/
+  app/
+    App.tsx
+    routes/
+  editor/
+    canvas/
+      FigureStage.tsx
+      ObjectRenderer.tsx
+      toolEvents.ts
+    tools/
+      selectTool.ts
+      roiTool.ts
+    model/
+      figure.ts
+      sourceImage.ts
+      roi.ts
+      inset.ts
+      exportPreset.ts
+    state/
+      projectStore.ts
+      historyStore.ts
+    image/
+      loadImageAsset.ts
+      cropRoi.ts
+      createDerivedSourceImage.ts
+    export/
+      exportPng.ts
+      exportJpg.ts
+    project/
+      projectPackage.ts
+      projectJson.ts
+  platform/
+    browser/
+      fileAdapter.ts
+    tauri/
+      fileAdapter.ts
+```
+
+## State Principles
+
+- The project model is the source of truth.
+- Canvas objects render from project state.
+- ROI and inset linkage is represented in state, not as copied pixels only.
+- Source image mutation rules are explicit.
+- Referenced source images are immutable.
+- Derived source images preserve lineage without replacing their source.
+- Undo/redo should operate on project-level editing commands, not hidden fallback behavior.
+
+## Export Principles
+
+- Export uses the current figure state and selected export preset.
+- Export presets are saved with the project.
+- Exported files are not saved as project history.
+- Export preview validates size, DPI, format, and background before producing an output file.
+
+## Open Questions
+
+- Exact undo/redo coverage for MVP.
+- Exact project folder structure and asset naming rules.
+- Whether PNG export alone is sufficient for the first runnable slice before adding JPG.
+- How strict DPI metadata handling must be in the first export implementation.
+- Whether linked inset precision mode is implemented in MVP or deferred after display-size mode.
