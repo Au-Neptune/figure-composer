@@ -195,10 +195,30 @@ src/
 - Exported files are not saved as project history.
 - Export preview validates size, DPI, format, and background before producing an output file.
 
+## MVP Project Package
+
+MVP projects are saved as folder packages:
+
+```txt
+Project Folder/
+  project.json
+  assets/
+    <source-image-id>_<sanitized-original-name>.<ext>
+```
+
+`project.json` stores the serialized figure model, ROI/inset linkage, export
+presets, and each Source Image's `assetFileName`. Runtime-only object URLs are
+not written to `project.json`; they are rebuilt from `assets/` when a project is
+opened.
+
+The browser development adapter uses the File System Access API for folder
+selection and local file writes. If that API is unavailable, project save/load
+fails with an explicit error instead of silently switching to a different
+package format.
+
 ## Open Questions
 
 - Exact undo/redo coverage for MVP.
-- Exact project folder structure and asset naming rules.
 - Whether PNG export alone is sufficient for the first runnable slice before adding JPG.
 - How strict DPI metadata handling must be in the first export implementation.
 - Whether linked inset precision mode is implemented in MVP or deferred after display-size mode.

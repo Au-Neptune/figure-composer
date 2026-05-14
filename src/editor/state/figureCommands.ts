@@ -10,6 +10,7 @@ import type { Rect, Size } from "../model/geometry";
 import { fitWithin, hasRenderableArea } from "../model/geometry";
 import type { RegionOfInterest } from "../model/roi";
 import type { ImportedSourceImage, SourceImage } from "../model/sourceImage";
+import { createAssetFileName } from "../project/assetNames";
 import {
   getFigureObject,
   getRoi,
@@ -57,10 +58,12 @@ export function addSourceImageToFigure(
   figure: Figure,
   imported: ImportedSourceImage,
 ): Figure {
+  const id = createId("source");
   const sourceImage: SourceImage = {
-    id: createId("source"),
+    id,
     name: imported.name,
     assetUrl: imported.assetUrl,
+    assetFileName: createAssetFileName(id, imported.name),
     width: imported.width,
     height: imported.height,
     referencedBy: [],

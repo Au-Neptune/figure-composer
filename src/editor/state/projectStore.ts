@@ -14,6 +14,7 @@ import {
 } from "./figureCommands";
 
 export type ProjectAction =
+  | { readonly type: "projectOpened"; readonly figure: Figure }
   | { readonly type: "sourceImageImported"; readonly imported: ImportedSourceImage }
   | {
       readonly type: "linkedInsetCreated";
@@ -42,6 +43,8 @@ export function createInitialProject(): Figure {
 
 export function projectReducer(figure: Figure, action: ProjectAction): Figure {
   switch (action.type) {
+    case "projectOpened":
+      return action.figure;
     case "sourceImageImported":
       return addSourceImageToFigure(figure, action.imported);
     case "linkedInsetCreated":
@@ -67,4 +70,3 @@ export function projectReducer(figure: Figure, action: ProjectAction): Figure {
       return setTool(figure, action.tool);
   }
 }
-

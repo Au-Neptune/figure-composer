@@ -9,6 +9,11 @@ import {
   projectReducer,
 } from "../editor/state/projectStore";
 import { readImageFile } from "../platform/browser/fileAdapter";
+import {
+  openProjectFolder,
+  saveProjectFolder,
+} from "../platform/browser/projectFolderAdapter";
+import { revokeFigureAssetUrls } from "../editor/project/assetUrls";
 import { AppToolbar } from "./AppToolbar";
 import { Inspector } from "./Inspector";
 
@@ -25,6 +30,16 @@ export function App(): ReactElement {
       const imported = await readImageWithVisibleError(file, setErrorMessage);
       dispatch({ type: "sourceImageImported", imported });
     }
+  };
+
+  const handleOpenProject = async () => {
+    const openedFigure = await runWithVisibleError(openProjectFolder, setErrorMessage);
+    dispatch({ type: "projectOpened", figure: openedFigure });
+    revokeFigureAssetUrls(figure);
+  };
+
+  const handleSaveProject = async () => {
+    await runWithVisibleError(() => saveProjectFolder(figure), setErrorMessage);
   };
 
   const handleExportPng = () => {
@@ -47,6 +62,8 @@ export function App(): ReactElement {
       <AppToolbar
         activeTool={figure.tool}
         onImport={handleImport}
+        onOpenProject={handleOpenProject}
+        onSaveProject={handleSaveProject}
         onToolChange={handleToolChange}
         onExportPng={handleExportPng}
       />
@@ -64,9 +81,16 @@ async function readImageWithVisibleError(
   file: File,
   setErrorMessage: (message: string | null) => void,
 ) {
+  return runWithVisibleError(() => readImageFile(file), setErrorMessage);
+}
+
+async function runWithVisibleError<T>(
+  action: () => Promise<T>,
+  setErrorMessage: (message: string | null) => void,
+): Promise<T> {
   try {
     setErrorMessage(null);
-    return await readImageFile(file);
+    return await action();
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     setErrorMessage(message);

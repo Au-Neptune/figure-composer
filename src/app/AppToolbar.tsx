@@ -1,10 +1,19 @@
 import type { ChangeEvent, ReactElement, ReactNode } from "react";
-import { Download, ImagePlus, MousePointer2, ScanSearch } from "lucide-react";
+import {
+  Download,
+  FolderOpen,
+  ImagePlus,
+  MousePointer2,
+  Save,
+  ScanSearch,
+} from "lucide-react";
 import type { ToolMode } from "../editor/model/figure";
 
 interface AppToolbarProps {
   readonly activeTool: ToolMode;
   readonly onImport: (event: ChangeEvent<HTMLInputElement>) => void;
+  readonly onOpenProject: () => void;
+  readonly onSaveProject: () => void;
   readonly onToolChange: (tool: ToolMode) => void;
   readonly onExportPng: () => void;
 }
@@ -12,6 +21,8 @@ interface AppToolbarProps {
 export function AppToolbar({
   activeTool,
   onImport,
+  onOpenProject,
+  onSaveProject,
   onToolChange,
   onExportPng,
 }: AppToolbarProps): ReactElement {
@@ -30,6 +41,18 @@ export function AppToolbar({
             onChange={onImport}
           />
         </label>
+        <ToolButton
+          label="Open"
+          active={false}
+          onClick={onOpenProject}
+          icon={<FolderOpen size={18} aria-hidden="true" />}
+        />
+        <ToolButton
+          label="Save"
+          active={false}
+          onClick={onSaveProject}
+          icon={<Save size={18} aria-hidden="true" />}
+        />
         <ToolButton
           label="Select"
           active={activeTool === "select"}
@@ -84,4 +107,3 @@ function ToolButton({
     </button>
   );
 }
-
