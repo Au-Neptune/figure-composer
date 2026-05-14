@@ -152,6 +152,13 @@ The MVP uses:
 
 Tauri-specific behavior must stay behind adapters. The figure editor should remain runnable in a browser development server without depending directly on Tauri APIs.
 
+Current platform boundaries:
+
+- Browser development uses the File System Access API through a browser project folder adapter.
+- Desktop builds use a Tauri shell with native folder dialogs and Rust commands for folder package reads and writes.
+- App/controller code depends on injected platform adapters, not directly on browser or Tauri APIs.
+- Tauri native compilation requires Rust 1.77.2 or newer, matching the current Tauri plugin requirement.
+
 Architecture decision records:
 
 - [ADR 0001: Use React, TypeScript, Konva, and Tauri for the MVP](./adr/0001-react-typescript-konva-tauri.md)
@@ -235,6 +242,12 @@ The browser development adapter uses the File System Access API for folder
 selection and local file writes. If that API is unavailable, project save/load
 fails with an explicit error instead of silently switching to a different
 package format.
+
+The Tauri desktop adapter uses native folder selection and Rust file IO for the
+same folder package format. The frontend sends the serialized `project.json` and
+Source Image asset bytes to native commands when saving; opening a project reads
+`project.json` and required assets natively, then recreates runtime object URLs
+inside the WebView.
 
 ## Open Questions
 
