@@ -21,6 +21,7 @@ import {
   type SerializedFigure,
   type SerializedSourceImage,
 } from "./projectJson";
+import { validateProjectReferences } from "./projectReferences";
 
 export function parseProjectJsonText(text: string): ProjectJson {
   const parsed = JSON.parse(text) as unknown;
@@ -43,7 +44,7 @@ function parseProjectJson(value: unknown): ProjectJson {
 
 function parseFigure(value: unknown): SerializedFigure {
   const record = readRecord(value, "Figure");
-  return {
+  const figure = {
     id: readString(record.id, "Figure id"),
     canvas: parseCanvas(record.canvas),
     sourceImages: readArray(record.sourceImages, "Source Images").map(
@@ -55,6 +56,8 @@ function parseFigure(value: unknown): SerializedFigure {
       parseExportPreset,
     ),
   };
+  validateProjectReferences(figure);
+  return figure;
 }
 
 function parseSourceImage(value: unknown): SerializedSourceImage {

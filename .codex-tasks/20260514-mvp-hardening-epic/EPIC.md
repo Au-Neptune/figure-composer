@@ -52,7 +52,7 @@
 
 ## Done-When
 
-- [ ] Every row in `SUBTASKS.csv` is `DONE`.
-- [ ] Final MVP smoke workflow passes: import, ROI, linked inset, dock, save,
+- [x] Every row in `SUBTASKS.csv` is `DONE`.
+- [x] Final MVP smoke workflow passes: import, ROI, linked inset, dock, save,
       reopen, export PNG/JPG, undo, and redo.
-- [ ] `npm.cmd run test`, `npm.cmd run typecheck`, and `npm.cmd run build` pass.
+- [x] `npm.cmd run test`, `npm.cmd run typecheck`, and `npm.cmd run build` pass.

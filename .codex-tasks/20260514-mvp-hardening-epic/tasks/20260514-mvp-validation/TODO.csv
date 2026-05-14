@@ -1,0 +1,6 @@
+id,task,status,acceptance_criteria,validation_command,completed_at,retry_count,notes
+1,Inspect current validation and smoke coverage,DONE,Existing tests validation boundaries and coverage gaps are understood,git -c safe.directory="D:/code/Figure Composer" status --short,2026-05-14T18:46:20+08:00,0,"Validation tests history tests and smoke gaps inspected"
+2,Add semantic project reference validation,DONE,Invalid source object ROI inset and referencedBy links are rejected with tests,npm.cmd run test,2026-05-14T18:48:26+08:00,1,"Added projectReferences validator and tests after fixing derived lineage fixture"
+3,Add MVP smoke workflow coverage,DONE,Smoke test covers import ROI inset dock save reopen export settings undo redo,npm.cmd run test,2026-05-14T18:49:57+08:00,1,"Added MVP smoke test after correcting undo redo assertions"
+4,Run integrated static validation,DONE,Typecheck and source limits pass after validation changes,npm.cmd run typecheck,2026-05-14T18:50:46+08:00,0,"typecheck file-size and function-span checks passed"
+5,Validate and close epic,DONE,All checks pass taskmaster artifacts are updated and epic is closed,npm.cmd run build,2026-05-14T18:52:48+08:00,0,"test typecheck build diff-check full source limits and HTTP checks passed"

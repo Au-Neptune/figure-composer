@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import type { Dispatch, ReactElement } from "react";
+import type { Dispatch, ReactElement, RefObject } from "react";
 import type Konva from "konva";
 import { Image, Rect, Transformer } from "react-konva";
 import { useImageAsset } from "../image/loadImageAsset";
@@ -54,6 +54,10 @@ interface LoadedFigureObjectProps extends ObjectRendererProps {
   readonly crop: ModelRect | undefined;
 }
 
+interface ObjectInteractionHandlerOptions extends ObjectRendererProps {
+  readonly nodeRef: RefObject<Konva.Image | null>;
+}
+
 function LoadedFigureObject({
   figure,
   object,
@@ -64,33 +68,13 @@ function LoadedFigureObject({
 }: LoadedFigureObjectProps): ReactElement {
   const selected = figure.selectedObjectId === object.id;
   const { nodeRef, transformerRef } = useKonvaTransformer<Konva.Image>(selected);
-  const handleDragMove = (event: Konva.KonvaEventObject<DragEvent>) =>
-    updateDragGuides({ figure, object, event, onPlacementGuidesChange });
-  const handleDragEnd = (event: Konva.KonvaEventObject<DragEvent>) =>
-    dispatchMove({ objectId: object.id, event, dispatch, onPlacementGuidesChange });
-  const handleTransform = () =>
-    updateTransformGuides({
-      figure,
-      object,
-      node: nodeRef.current,
-      onPlacementGuidesChange,
-    });
-  const handleTransformEnd = () =>
-    dispatchResize({
-      objectId: object.id,
-      node: nodeRef.current,
-      dispatch,
-      onPlacementGuidesChange,
-    });
-  const handleSelect = (
-    event: Konva.KonvaEventObject<MouseEvent | TouchEvent>,
-  ) =>
-    selectFigureObject({
-      figure,
-      objectId: object.id,
-      event,
-      dispatch,
-    });
+  const handlers = createObjectInteractionHandlers({
+    figure,
+    object,
+    dispatch,
+    onPlacementGuidesChange,
+    nodeRef,
+  });
 
   return (
     <>
@@ -104,12 +88,12 @@ function LoadedFigureObject({
         height={object.height}
         draggable={figure.tool === "select"}
         dragBoundFunc={(position) => snapDragPosition({ position, object, figure })}
-        onMouseDown={handleSelect}
-        onTouchStart={handleSelect}
-        onDragMove={handleDragMove}
-        onDragEnd={handleDragEnd}
-        onTransform={handleTransform}
-        onTransformEnd={handleTransformEnd}
+        onMouseDown={handlers.handleSelect}
+        onTouchStart={handlers.handleSelect}
+        onDragMove={handlers.handleDragMove}
+        onDragEnd={handlers.handleDragEnd}
+        onTransform={handlers.handleTransform}
+        onTransformEnd={handlers.handleTransformEnd}
       />
       {selected ? (
         <Transformer
@@ -121,6 +105,42 @@ function LoadedFigureObject({
       ) : null}
     </>
   );
+}
+
+function createObjectInteractionHandlers({
+  figure,
+  object,
+  dispatch,
+  onPlacementGuidesChange,
+  nodeRef,
+}: ObjectInteractionHandlerOptions) {
+  return {
+    handleDragMove: (event: Konva.KonvaEventObject<DragEvent>) =>
+      updateDragGuides({ figure, object, event, onPlacementGuidesChange }),
+    handleDragEnd: (event: Konva.KonvaEventObject<DragEvent>) =>
+      dispatchMove({ objectId: object.id, event, dispatch, onPlacementGuidesChange }),
+    handleTransform: () =>
+      updateTransformGuides({
+        figure,
+        object,
+        node: nodeRef.current,
+        onPlacementGuidesChange,
+      }),
+    handleTransformEnd: () =>
+      dispatchResize({
+        objectId: object.id,
+        node: nodeRef.current,
+        dispatch,
+        onPlacementGuidesChange,
+      }),
+    handleSelect: (event: Konva.KonvaEventObject<MouseEvent | TouchEvent>) =>
+      selectFigureObject({
+        figure,
+        objectId: object.id,
+        event,
+        dispatch,
+      }),
+  };
 }
 
 function LoadingFigureObject({

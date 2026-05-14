@@ -21,15 +21,15 @@
 > If resuming after compaction, session restart, or context loss, read this
 > section first.
 
-- **Current milestone**: #5 Harden MVP validation and smoke coverage
-- **Current status**: WAITING_SUBTASK
-- **Last completed**: #4 Implement derived source image crop
+- **Current milestone**: Epic complete
+- **Current status**: DONE
+- **Last completed**: #5 Harden MVP validation and smoke coverage
 - **Current artifact**: `SUBTASKS.csv`
 - **Key context**: The MVP vertical slice exists and is pushed. The next work
   should improve editing ergonomics before expanding image operations.
 - **Known issues**: None blocking. Vite build reports a chunk size warning.
-- **Next action**: Create `tasks/20260514-mvp-validation/` as a Full Single
-  child task and begin row #5 from `SUBTASKS.csv`.
+- **Next action**: None. Epic validation is complete and the final checkpoint
+  should be committed and pushed.
 
 > Update this block every time a child deliverable changes status.
 
@@ -247,3 +247,66 @@
   - `src/app/Inspector.tsx`
   - `src/app/App.css`
 - **Next step**: Child #5 Harden MVP validation and smoke coverage.
+
+---
+
+## Child #5 Started: Harden MVP validation and smoke coverage
+
+- **Status**: IN_PROGRESS
+- **Started**: 18:45
+- **What was done**:
+  - Marked `SUBTASKS.csv` row #5 as `IN_PROGRESS`.
+  - Created Full Single child task artifacts under
+    `tasks/20260514-mvp-validation/`.
+- **Validation**: Pending child task validation.
+- **Next step**: Read child `TODO.csv` and inspect current project validation,
+  reducer tests, project JSON tests, and smoke coverage.
+
+---
+
+## Child #5 Completed: Harden MVP validation and smoke coverage
+
+- **Status**: DONE
+- **Completed**: 18:52
+- **What was done**:
+  - Added semantic project reference validation and tests.
+  - Added MVP smoke workflow coverage for import, ROI, linked Inset, dock,
+    save/reopen through project JSON, export settings, undo, and redo.
+  - Split `LoadedFigureObject` handlers to satisfy function-size limits.
+  - Ran final test, typecheck, build, diff, source limit, and HTTP checks.
+- **Validation**:
+  - `npm.cmd run test` -> exit 0, 7 files / 32 tests passed.
+  - `npm.cmd run typecheck` -> exit 0.
+  - `npm.cmd run build` -> exit 0 with Vite chunk size warning.
+  - `git -c safe.directory="D:/code/Figure Composer" -c core.quotepath=false diff --check` -> exit 0.
+  - Full source file size and function span checks passed.
+  - `Invoke-WebRequest http://127.0.0.1:5173/` -> HTTP 200.
+- **Files changed**:
+  - `src/editor/project/projectReferences.ts`
+  - `src/editor/project/projectReferences.test.ts`
+  - `src/editor/project/projectJsonValidation.ts`
+  - `src/editor/project/projectJson.test.ts`
+  - `src/editor/state/mvpSmoke.test.ts`
+  - `src/editor/canvas/ObjectRenderer.tsx`
+- **Next step**: Close epic.
+
+---
+
+## Epic Completed
+
+- **Status**: DONE
+- **Completed**: 18:52
+- **What was done**:
+  - Completed all five child deliverables in `SUBTASKS.csv`.
+  - Improved inset placement and snap guides.
+  - Added source image rename/delete management.
+  - Built export preview and output-size workflow.
+  - Implemented derived Source Image crop with lineage.
+  - Hardened semantic project validation and MVP smoke coverage.
+- **Final validation**:
+  - `npm.cmd run test` -> exit 0, 7 files / 32 tests passed.
+  - `npm.cmd run typecheck` -> exit 0.
+  - `npm.cmd run build` -> exit 0 with Vite chunk size warning.
+  - `git -c safe.directory="D:/code/Figure Composer" -c core.quotepath=false diff --check` -> exit 0.
+  - Full source size/function checks passed.
+  - `Invoke-WebRequest http://127.0.0.1:5173/` -> HTTP 200.

@@ -82,8 +82,8 @@ describe("projectJson", () => {
     expect(derived?.lineage).toEqual({
       kind: "derived",
       parentSourceImageId: figure.sourceImages[0]?.id,
-      roiId: "roi_test",
-      cropRect: { x: 12, y: 14, width: 120, height: 80 },
+      roiId: figure.rois[0]?.id,
+      cropRect: figure.rois[0]?.rect,
     });
   });
 });
@@ -114,10 +114,14 @@ function createLegacySourceImage(sourceImage: {
 }
 
 function createFigureWithDerivedSourceImage(): Figure {
-  const figure = createFigureWithSourceImage();
+  const figure = createFigureWithLinkedInset();
   const parent = figure.sourceImages[0];
+  const roi = figure.rois[0];
   if (!parent) {
     throw new Error("Expected a parent Source Image.");
+  }
+  if (!roi) {
+    throw new Error("Expected a ROI for derived Source Image lineage.");
   }
   return {
     ...figure,
@@ -135,10 +139,28 @@ function createFigureWithDerivedSourceImage(): Figure {
         lineage: {
           kind: "derived",
           parentSourceImageId: parent.id,
-          roiId: "roi_test",
-          cropRect: { x: 12, y: 14, width: 120, height: 80 },
+          roiId: roi.id,
+          cropRect: roi.rect,
         },
       },
     ],
   };
+}
+
+function createFigureWithLinkedInset(): Figure {
+  const figure = createFigureWithSourceImage();
+  const sourceObject = figure.objects.find((item) => item.kind === "sourceImage");
+  if (!sourceObject || sourceObject.kind !== "sourceImage") {
+    throw new Error("Expected a Source Image object.");
+  }
+  return projectReducer(figure, {
+    type: "linkedInsetCreated",
+    sourceObjectId: sourceObject.id,
+    stageRect: {
+      x: sourceObject.x,
+      y: sourceObject.y,
+      width: 120,
+      height: 80,
+    },
+  });
 }
