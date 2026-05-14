@@ -50,7 +50,8 @@ pub fn save_project_folder(request: SaveProjectFolderRequest) -> Result<(), Stri
     validate_save_request(&request)?;
     let root = require_root_path(&request.root_path)?;
     let assets_dir = root.join(PROJECT_ASSETS_DIR_NAME);
-    fs::create_dir_all(&assets_dir).map_err(|error| format!("Failed to create assets directory: {error}"))?;
+    fs::create_dir_all(&assets_dir)
+        .map_err(|error| format!("Failed to create assets directory: {error}"))?;
     for asset in &request.assets {
         write_project_asset(&assets_dir, asset)?;
     }
@@ -100,7 +101,7 @@ fn parse_asset_file_names(project_json_text: &str) -> Result<BTreeSet<String>, S
 
 fn write_project_asset(assets_dir: &Path, asset: &ProjectAssetPayload) -> Result<(), String> {
     let file_name = validate_asset_file_name(&asset.file_name)?;
-    fs::write(assets_dir.join(file_name), &asset.bytes)
+    fs::write(assets_dir.join(&file_name), &asset.bytes)
         .map_err(|error| format!("Failed to write project asset {file_name}: {error}"))
 }
 
@@ -127,8 +128,8 @@ fn validate_asset_file_name(file_name: &str) -> Result<String, String> {
         return Err("Project asset file name is empty.".to_string());
     }
     let mut components = Path::new(file_name).components();
-    let is_valid_file_name = matches!(components.next(), Some(Component::Normal(_)))
-        && components.next().is_none();
+    let is_valid_file_name =
+        matches!(components.next(), Some(Component::Normal(_))) && components.next().is_none();
     if !is_valid_file_name {
         return Err(format!("Invalid project asset file name: {file_name}"));
     }

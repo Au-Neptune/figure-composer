@@ -2,5 +2,7 @@ node_modules/
 dist/
 .vite/
 .codex-tasks/
+src-tauri/gen/
+src-tauri/target/
 *.local
 *.log

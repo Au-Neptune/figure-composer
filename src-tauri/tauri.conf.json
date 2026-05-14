@@ -2,7 +2,7 @@
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Figure Composer",
   "version": "0.1.0",
-  "identifier": "com.figurecomposer.app",
+  "identifier": "com.figurecomposer.desktop",
   "build": {
     "beforeDevCommand": "npm.cmd run dev",
     "beforeBuildCommand": "npm.cmd run build",
@@ -26,6 +26,13 @@
   },
   "bundle": {
     "active": true,
-    "targets": "all"
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
   }
 }
