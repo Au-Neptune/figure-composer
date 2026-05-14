@@ -26,7 +26,7 @@ export default defineConfig({
   },
   envPrefix: ["VITE_", "TAURI_ENV_*"],
   build: {
-    minify: tauriDebug ? false : "esbuild",
+    minify: !tauriDebug,
     sourcemap: tauriDebug,
   },
 });
