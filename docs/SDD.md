@@ -87,6 +87,12 @@ The MVP should then expand to:
 - Project save/load using folder packages.
 - Core undo/redo for editing operations.
 
+Current undo/redo coverage includes project-level editing commands: importing a
+Source Image, creating a linked Inset from a Region Of Interest, moving or
+resizing Figure objects, changing a Region Of Interest, and editing the active
+Export Preset. Selection changes, tool changes, saving, exporting, and opening a
+Project are not tracked as undoable edits. Opening a Project resets history.
+
 ## MVP Image Operations
 
 MVP image operations are limited to:
@@ -223,6 +229,5 @@ package format.
 
 ## Open Questions
 
-- Exact undo/redo coverage for MVP.
 - How strict DPI metadata handling must be in the first export implementation.
 - Whether linked inset precision mode is implemented in MVP or deferred after display-size mode.

@@ -88,6 +88,13 @@ select {
   border-color: #28766f;
 }
 
+.tool-button:disabled {
+  border-color: #cbd4c5;
+  background: #edf1ea;
+  color: #98a293;
+  cursor: not-allowed;
+}
+
 .tool-button.is-active {
   border-color: #28766f;
   background: #dceee8;
