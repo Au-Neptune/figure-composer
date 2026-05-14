@@ -1,17 +1,20 @@
 import type { ReactElement } from "react";
-import type { ExportPreset } from "../editor/model/exportPreset";
+import type { ExportPreset, ExportPresetPatch } from "../editor/model/exportPreset";
 import type { Figure } from "../editor/model/figure";
+import { ExportPresetEditor } from "./ExportPresetEditor";
 
 interface InspectorProps {
   readonly figure: Figure;
-  readonly pngPreset: ExportPreset | undefined;
+  readonly exportPreset: ExportPreset;
   readonly errorMessage: string | null;
+  readonly onExportPresetChange: (patch: ExportPresetPatch) => void;
 }
 
 export function Inspector({
   figure,
-  pngPreset,
+  exportPreset,
   errorMessage,
+  onExportPresetChange,
 }: InspectorProps): ReactElement {
   const insetCount = figure.objects.filter((object) => object.kind === "inset").length;
   return (
@@ -21,7 +24,10 @@ export function Inspector({
       <InspectorMetric label="Insets" value={insetCount} />
       <div className="inspector-section">
         <h2>Export Preset</h2>
-        <p>{pngPreset?.name ?? "No PNG preset"}</p>
+        <ExportPresetEditor
+          preset={exportPreset}
+          onChange={onExportPresetChange}
+        />
       </div>
       {errorMessage ? <p className="error-message">{errorMessage}</p> : null}
     </aside>
@@ -42,4 +48,3 @@ function InspectorMetric({
     </div>
   );
 }
-

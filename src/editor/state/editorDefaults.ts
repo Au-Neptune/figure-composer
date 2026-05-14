@@ -3,6 +3,7 @@ export const DEFAULT_CANVAS_HEIGHT = 800;
 export const DEFAULT_CANVAS_BACKGROUND = "#f8faf7";
 export const DEFAULT_DPI = 300;
 export const DEFAULT_JPG_QUALITY = 0.92;
+export const CSS_SCREEN_DPI = 96;
 export const IMPORT_IMAGE_MAX_WIDTH = 520;
 export const IMPORT_IMAGE_MAX_HEIGHT = 520;
 export const IMPORT_IMAGE_START_X = 64;
@@ -14,4 +15,9 @@ export const MIN_ROI_SIDE_PX = 4;
 export const MIN_OBJECT_SIDE_PX = 24;
 export const ROI_FRAME_STROKE = "#e11d48";
 export const ROI_FRAME_STROKE_WIDTH = 3;
+export const MIN_EXPORT_DIMENSION = 1;
+export const MIN_EXPORT_DPI = 1;
+export const MIN_JPG_QUALITY = 0.1;
+export const MAX_JPG_QUALITY = 1;
+export const JPG_QUALITY_STEP = 0.01;
 

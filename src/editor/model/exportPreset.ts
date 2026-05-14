@@ -11,3 +11,10 @@ export interface ExportPreset {
   readonly jpgQuality: number;
 }
 
+export type ExportPresetPatch = Partial<
+  Pick<
+    ExportPreset,
+    "name" | "width" | "height" | "dpi" | "format" | "background" | "jpgQuality"
+  >
+>;
+

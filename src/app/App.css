@@ -19,7 +19,8 @@ body {
 }
 
 button,
-input {
+input,
+select {
   font: inherit;
 }
 
@@ -150,6 +151,39 @@ input {
   line-height: 1.45;
 }
 
+.preset-editor {
+  display: grid;
+  gap: 10px;
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  color: #526051;
+  font-size: 13px;
+}
+
+.field-row input,
+.field-row select {
+  min-width: 0;
+  height: 32px;
+  border: 1px solid #b9c4b2;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #1f261f;
+  padding: 0 8px;
+}
+
+.field-row input[type="color"] {
+  padding: 3px;
+}
+
+.field-row input[type="range"] {
+  padding: 0;
+}
+
 .error-message {
   border-left: 3px solid #e11d48;
   color: #9f1239;
@@ -196,4 +230,3 @@ input {
     border-bottom: 1px solid #cbd4c5;
   }
 }
-

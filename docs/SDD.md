@@ -113,6 +113,11 @@ Supported in MVP:
 - PNG.
 - JPG.
 
+Current browser implementation uses the active **Export Preset** for canvas
+width, canvas height, DPI raster scale, output format, background color, and JPG
+quality. DPI currently controls export pixel ratio; writing DPI metadata into
+the output file remains unresolved.
+
 Deferred:
 
 - TIFF.
@@ -219,6 +224,5 @@ package format.
 ## Open Questions
 
 - Exact undo/redo coverage for MVP.
-- Whether PNG export alone is sufficient for the first runnable slice before adding JPG.
 - How strict DPI metadata handling must be in the first export implementation.
 - Whether linked inset precision mode is implemented in MVP or deferred after display-size mode.

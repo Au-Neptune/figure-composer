@@ -15,7 +15,8 @@ interface AppToolbarProps {
   readonly onOpenProject: () => void;
   readonly onSaveProject: () => void;
   readonly onToolChange: (tool: ToolMode) => void;
-  readonly onExportPng: () => void;
+  readonly onExportFigure: () => void;
+  readonly exportLabel: string;
 }
 
 export function AppToolbar({
@@ -24,7 +25,8 @@ export function AppToolbar({
   onOpenProject,
   onSaveProject,
   onToolChange,
-  onExportPng,
+  onExportFigure,
+  exportLabel,
 }: AppToolbarProps): ReactElement {
   return (
     <header className="app-toolbar">
@@ -65,9 +67,9 @@ export function AppToolbar({
           onClick={() => onToolChange("roi")}
           icon={<ScanSearch size={18} aria-hidden="true" />}
         />
-        <button className="tool-button" type="button" onClick={onExportPng}>
+        <button className="tool-button" type="button" onClick={onExportFigure}>
           <Download size={18} aria-hidden="true" />
-          <span>PNG</span>
+          <span>{exportLabel}</span>
         </button>
       </div>
     </header>

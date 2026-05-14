@@ -2,7 +2,8 @@ import { useReducer, useRef, useState } from "react";
 import type { ChangeEvent, ReactElement } from "react";
 import type Konva from "konva";
 import { FigureStage } from "../editor/canvas/FigureStage";
-import { exportStageAsPng } from "../editor/export/exportPng";
+import { exportStageAsFigure } from "../editor/export/exportFigure";
+import type { ExportPreset, ExportPresetPatch } from "../editor/model/exportPreset";
 import type { ToolMode } from "../editor/model/figure";
 import {
   createInitialProject,
@@ -21,7 +22,7 @@ export function App(): ReactElement {
   const [figure, dispatch] = useReducer(projectReducer, undefined, createInitialProject);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const stageRef = useRef<Konva.Stage>(null);
-  const pngPreset = figure.exportPresets.find((preset) => preset.format === "png");
+  const exportPreset = getPrimaryExportPreset(figure.exportPresets);
 
   const handleImport = async (event: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.currentTarget.files ?? []);
@@ -42,19 +43,23 @@ export function App(): ReactElement {
     await runWithVisibleError(() => saveProjectFolder(figure), setErrorMessage);
   };
 
-  const handleExportPng = () => {
+  const handleExportFigure = () => {
     const stage = stageRef.current;
-    if (!stage || !pngPreset) {
-      throw new Error("PNG export requires a mounted Figure Stage and PNG preset.");
+    if (!stage) {
+      throw new Error("Figure export requires a mounted Figure Stage.");
     }
-    exportStageAsPng(stage, {
-      fileName: "figure-composer-export.png",
-      pixelRatio: pngPreset.dpi / 96,
+    exportStageAsFigure(stage, {
+      fileBasename: "figure-composer-export",
+      preset: exportPreset,
     });
   };
 
   const handleToolChange = (tool: ToolMode) => {
     dispatch({ type: "toolChanged", tool });
+  };
+
+  const handleExportPresetChange = (patch: ExportPresetPatch) => {
+    dispatch({ type: "exportPresetChanged", presetId: exportPreset.id, patch });
   };
 
   return (
@@ -65,16 +70,30 @@ export function App(): ReactElement {
         onOpenProject={handleOpenProject}
         onSaveProject={handleSaveProject}
         onToolChange={handleToolChange}
-        onExportPng={handleExportPng}
+        onExportFigure={handleExportFigure}
+        exportLabel={exportPreset.format.toUpperCase()}
       />
       <section className="workspace">
-        <Inspector figure={figure} pngPreset={pngPreset} errorMessage={errorMessage} />
+        <Inspector
+          figure={figure}
+          exportPreset={exportPreset}
+          errorMessage={errorMessage}
+          onExportPresetChange={handleExportPresetChange}
+        />
         <div className="stage-viewport">
           <FigureStage figure={figure} stageRef={stageRef} dispatch={dispatch} />
         </div>
       </section>
     </main>
   );
+}
+
+function getPrimaryExportPreset(exportPresets: readonly ExportPreset[]): ExportPreset {
+  const preset = exportPresets[0];
+  if (!preset) {
+    throw new Error("A Figure requires at least one Export Preset.");
+  }
+  return preset;
 }
 
 async function readImageWithVisibleError(

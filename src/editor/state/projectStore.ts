@@ -1,3 +1,4 @@
+import type { ExportPresetPatch } from "../model/exportPreset";
 import type { Figure, ToolMode } from "../model/figure";
 import type { Rect } from "../model/geometry";
 import type { ImportedSourceImage } from "../model/sourceImage";
@@ -12,6 +13,7 @@ import {
   setTool,
   updateRoiFromStageRect,
 } from "./figureCommands";
+import { updateExportPreset } from "./exportPresetCommands";
 
 export type ProjectAction =
   | { readonly type: "projectOpened"; readonly figure: Figure }
@@ -35,7 +37,12 @@ export type ProjectAction =
   | { readonly type: "roiChanged"; readonly roiId: string; readonly stageRect: Rect }
   | { readonly type: "figureObjectSelected"; readonly objectId: string | null }
   | { readonly type: "roiFrameSelected"; readonly roiId: string }
-  | { readonly type: "toolChanged"; readonly tool: ToolMode };
+  | { readonly type: "toolChanged"; readonly tool: ToolMode }
+  | {
+      readonly type: "exportPresetChanged";
+      readonly presetId: string;
+      readonly patch: ExportPresetPatch;
+    };
 
 export function createInitialProject(): Figure {
   return createInitialFigure();
@@ -68,5 +75,10 @@ export function projectReducer(figure: Figure, action: ProjectAction): Figure {
       return selectRoiFrame(figure, action.roiId);
     case "toolChanged":
       return setTool(figure, action.tool);
+    case "exportPresetChanged":
+      return updateExportPreset(figure, {
+        presetId: action.presetId,
+        patch: action.patch,
+      });
   }
 }

@@ -8,6 +8,12 @@ import type {
 import type { Rect } from "../model/geometry";
 import type { RegionOfInterest, RoiFrameStyle } from "../model/roi";
 import {
+  MAX_JPG_QUALITY,
+  MIN_EXPORT_DIMENSION,
+  MIN_EXPORT_DPI,
+  MIN_JPG_QUALITY,
+} from "../state/editorDefaults";
+import {
   PROJECT_FORMAT_NAME,
   PROJECT_FORMAT_VERSION,
   type ProjectJson,
@@ -44,7 +50,7 @@ function parseFigure(value: unknown): SerializedFigure {
     ),
     objects: readArray(record.objects, "Figure objects").map(parseFigureObject),
     rois: readArray(record.rois, "Regions Of Interest").map(parseRoi),
-    exportPresets: readArray(record.exportPresets, "Export Presets").map(
+    exportPresets: readNonEmptyArray(record.exportPresets, "Export Presets").map(
       parseExportPreset,
     ),
   };
@@ -130,12 +136,16 @@ function parseExportPreset(value: unknown): ExportPreset {
   return {
     id: readString(record.id, "Export Preset id"),
     name: readString(record.name, "Export Preset name"),
-    width: readNumber(record.width, "Export Preset width"),
-    height: readNumber(record.height, "Export Preset height"),
-    dpi: readNumber(record.dpi, "Export Preset DPI"),
+    width: readMinNumber(record.width, "Export Preset width", MIN_EXPORT_DIMENSION),
+    height: readMinNumber(
+      record.height,
+      "Export Preset height",
+      MIN_EXPORT_DIMENSION,
+    ),
+    dpi: readMinNumber(record.dpi, "Export Preset DPI", MIN_EXPORT_DPI),
     format: parseExportFormat(record.format),
     background: readString(record.background, "Export Preset background"),
-    jpgQuality: readNumber(record.jpgQuality, "Export Preset JPG quality"),
+    jpgQuality: readJpgQuality(record.jpgQuality),
   };
 }
 
@@ -180,6 +190,14 @@ function readArray(value: unknown, label: string): readonly unknown[] {
   return value;
 }
 
+function readNonEmptyArray(value: unknown, label: string): readonly unknown[] {
+  const items = readArray(value, label);
+  if (items.length === 0) {
+    throw new Error(`${label} must contain at least one item.`);
+  }
+  return items;
+}
+
 function readString(value: unknown, label: string): string {
   if (typeof value !== "string") {
     throw new Error(`${label} must be a string.`);
@@ -194,10 +212,27 @@ function readNumber(value: unknown, label: string): number {
   return value;
 }
 
+function readMinNumber(value: unknown, label: string, min: number): number {
+  const number = readNumber(value, label);
+  if (number < min) {
+    throw new Error(`${label} must be at least ${min}.`);
+  }
+  return number;
+}
+
+function readJpgQuality(value: unknown): number {
+  const quality = readNumber(value, "Export Preset JPG quality");
+  if (quality < MIN_JPG_QUALITY || quality > MAX_JPG_QUALITY) {
+    throw new Error(
+      `Export Preset JPG quality must be between ${MIN_JPG_QUALITY} and ${MAX_JPG_QUALITY}.`,
+    );
+  }
+  return quality;
+}
+
 function readBoolean(value: unknown, label: string): boolean {
   if (typeof value !== "boolean") {
     throw new Error(`${label} must be a boolean.`);
   }
   return value;
 }
-
